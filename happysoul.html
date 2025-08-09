@@ -1,402 +1,70 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import { motion, useScroll, useSpring, useTransform, AnimatePresence } from "framer-motion";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Happy Souls — Yoga by Khushi Lekhwani</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    body { background: radial-gradient(circle at top left, rgba(255,255,255,0.05), transparent), linear-gradient(120deg, #f0f, #0ff); min-height: 100vh; }
+    .glass { backdrop-filter: blur(16px); background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 1rem; }
+  </style>
+</head>
+<body class="text-white">
+  <header class="glass p-4 m-4 flex justify-between items-center">
+    <h1 class="font-bold text-lg">Happy Souls — Khushi Lekhwani</h1>
+    <a href="https://wa.me/?text=Hello%20Khushi%2C%20I%27d%20like%20to%20join%20Happy%20Souls" target="_blank" class="px-4 py-2 glass">WhatsApp to Join</a>
+  </header>
 
-// Single‑file React component: Glassmorphic, modern & interactive
-// TailwindCSS required. Place optional images in the SAME folder:
-// hero.jpg, breath.jpg, pose1.jpg, pose2.jpg, pose3.jpg, pose4.jpg
+  <main class="space-y-8 p-4">
+    <section class="glass p-6 text-center">
+      <img src="hero.jpg" alt="Happy Souls Yoga" class="mx-auto rounded-xl mb-4" onerror="this.style.display='none'">
+      <h2 class="text-3xl font-bold mb-2">Happy Souls — Yoga by Khushi Lekhwani</h2>
+      <p>A guided, interactive journey that mirrors a real class — breathe, flow, strengthen, and soften.</p>
+      <a href="https://wa.me/?text=I%27m%20interested%20in%20Happy%20Souls" target="_blank" class="mt-4 inline-block px-4 py-2 glass">Message on WhatsApp</a>
+    </section>
 
-const gradients = [
-  "from-fuchsia-400 via-cyan-300 to-emerald-300",
-  "from-rose-400 via-violet-300 to-sky-300",
-  "from-amber-300 via-rose-300 to-indigo-300",
-];
-
-const Section = ({ id, children, className = "" }) => (
-  <section id={id} className={`relative w-full max-w-6xl mx-auto px-6 md:px-8 ${className}`}>{children}</section>
-);
-
-const GlassCard = ({ children, className = "" }) => (
-  <div className={`backdrop-blur-xl bg-white/10 border border-white/20 shadow-2xl rounded-3xl ${className}`}>
-    {children}
-  </div>
-);
-
-// Image that hides if file is missing and shows a soft placeholder instead
-const SmartImage = ({ src, alt = "", className = "", rounded = "rounded-2xl" }) => {
-  const [ok, setOk] = useState(true);
-  return (
-    <div className={`relative overflow-hidden ${rounded} ${className}`}>
-      {ok ? (
-        <img
-          src={src}
-          alt={alt}
-          className="w-full h-full object-cover"
-          onError={() => setOk(false)}
-          loading="lazy"
-        />
-      ) : (
-        <div className="absolute inset-0 grid place-items-center bg-gradient-to-br from-white/10 to-white/5">
-          <div className="text-white/70 text-sm">Image placeholder</div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-// Background and chrome
-const Sparkle = ({ delay = 0 }) => (
-  <motion.span
-    className="absolute w-1.5 h-1.5 rounded-full bg-white/80"
-    initial={{ opacity: 0, scale: 0.6, y: 0 }}
-    animate={{ opacity: [0, 1, 0], y: [-10, -20, -30], scale: [0.6, 1, 0.6] }}
-    transition={{ duration: 2.4, ease: "easeInOut", repeat: Infinity, delay }}
-    style={{ left: `${Math.random() * 100}%`, top: `${Math.random() * 100}%` }}
-  />
-);
-
-const Background = () => {
-  const { scrollY } = useScroll();
-  const rotate = useTransform(scrollY, [0, 1200], [0, 24]);
-  const y = useTransform(scrollY, [0, 1200], [0, -200]);
-  const scale = useTransform(scrollY, [0, 1200], [1, 1.15]);
-  return (
-    <motion.div aria-hidden className="fixed inset-0 -z-10 overflow-hidden">
-      {/* Soft gradient blobs */}
-      <motion.div
-        className="absolute -top-32 -right-32 h-[50vmax] w-[50vmax] rounded-full blur-3xl opacity-60 bg-gradient-to-br from-fuchsia-400/40 via-cyan-300/40 to-emerald-300/40"
-        style={{ rotate, y, scale }}
-      />
-      <motion.div
-        className="absolute -bottom-40 -left-32 h-[45vmax] w-[45vmax] rounded-full blur-3xl opacity-60 bg-gradient-to-tr from-rose-400/30 via-violet-300/30 to-sky-300/30"
-        style={{ rotate: useTransform(scrollY, [0, 1200], [0, -18]), y: useTransform(scrollY, [0, 1200], [0, 160]), scale: useTransform(scrollY, [0, 1200], [1, 1.1]) }}
-      />
-
-      {/* Floating sparkles */}
-      <div className="absolute inset-0 pointer-events-none">
-        {Array.from({ length: 24 }).map((_, i) => (
-          <Sparkle key={i} delay={i * 0.08} />
-        ))}
-      </div>
-
-      {/* Subtle grid overlay */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.25)_1px,transparent_1px)] [background-size:16px_16px] opacity-[0.18]" />
-    </motion.div>
-  );
-};
-
-const ScrollProgress = () => {
-  const { scrollYProgress } = useScroll();
-  const width = useSpring(scrollYProgress, { stiffness: 120, damping: 25, mass: 0.4 });
-  return (
-    <motion.div className="fixed top-0 left-0 right-0 h-1.5 z-50">
-      <motion.div className="h-full bg-gradient-to-r from-teal-300 via-fuchsia-300 to-rose-300" style={{ scaleX: width, transformOrigin: "0% 50%" }} />
-    </motion.div>
-  );
-};
-
-// WhatsApp composer that lets users add details before sending
-const WhatsAppCTA = ({ label = "WhatsApp Khushi", preset = "" }) => {
-  const [open, setOpen] = useState(false);
-  const [notes, setNotes] = useState("");
-
-  const send = () => {
-    const base = `Hello Khushi, I'd like to join *Happy Souls* (Instructor: *Khushi Lekhwani*). ${preset}`.trim();
-    const text = encodeURIComponent(`${base}
-
-Details: ${notes}`);
-    const url = `https://wa.me/?text=${text}`; // opens WhatsApp with prefilled message (no specific number)
-    window.open(url, "_blank", "noopener,noreferrer");
-  };
-
-  return (
-    <div className="w-full">
-      {!open ? (
-        <button
-          onClick={() => setOpen(true)}
-          className="px-5 py-3 rounded-full bg-white/20 hover:bg-white/30 border border-white/30 w-full sm:w-auto"
-        >
-          {label}
-        </button>
-      ) : (
-        <GlassCard className="p-4 mt-3">
-          <label className="text-sm text-white/90">Add any details (schedule preference, online/studio, experience):</label>
-          <textarea
-            className="mt-2 w-full h-28 bg-white/10 border border-white/20 rounded-xl p-3 outline-none focus:bg-white/15"
-            placeholder="e.g., Prefer evenings, beginner, can bring my own mat"
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-          />
-          <div className="mt-3 flex gap-3">
-            <button onClick={send} className="px-5 py-2 rounded-full bg-white/20 hover:bg-white/30 border border-white/30">Send on WhatsApp</button>
-            <button onClick={() => setOpen(false)} className="px-5 py-2 rounded-full border border-white/30 hover:bg-white/20">Cancel</button>
-          </div>
-        </GlassCard>
-      )}
-    </div>
-  );
-};
-
-const BreathingOrb = () => {
-  const [playing, setPlaying] = useState(true);
-  const [phase, setPhase] = useState("inhale");
-  const phases = [
-    { label: "inhale", seconds: 4 },
-    { label: "hold", seconds: 2 },
-    { label: "exhale", seconds: 6 },
-    { label: "hold", seconds: 2 },
-  ];
-  const idxRef = useRef(0);
-
-  useEffect(() => {
-    if (!playing) return;
-    const tick = () => {
-      idxRef.current = (idxRef.current + 1) % phases.length;
-      setPhase(phases[idxRef.current].label);
-      timerRef.current = setTimeout(tick, phases[idxRef.current].seconds * 1000);
-    };
-    const timerRef = { current: setTimeout(tick, phases[0].seconds * 1000) };
-    return () => clearTimeout(timerRef.current);
-  }, [playing]);
-
-  const scale = phase === "inhale" ? 1.18 : phase === "exhale" ? 0.88 : 1.04;
-
-  return (
-    <GlassCard className="p-6 md:p-8 flex flex-col items-center gap-4 md:gap-6">
-      <p className="text-sm uppercase tracking-widest text-white/80">Breath Coach</p>
-      <motion.div
-        className="relative grid place-items-center h-44 w-44 md:h-56 md:w-56 rounded-full bg-gradient-to-tr from-white/40 to-white/10 border border-white/30 shadow-inner"
-        animate={{ scale }}
-        transition={{ duration: 1.8, ease: "easeInOut" }}
-      >
-        <div className="absolute inset-0 rounded-full backdrop-blur-xl" />
-        <div className="absolute inset-0 rounded-full bg-[conic-gradient(from_0deg,rgba(255,255,255,0.7)_0deg,transparent_120deg,rgba(255,255,255,0.7)_240deg)] animate-[spin_10s_linear_infinite]" />
-        <span className="relative z-10 font-semibold tracking-wide text-white/90 capitalize">{phase}</span>
-      </motion.div>
-      <button
-        onClick={() => setPlaying((p) => !p)}
-        className="px-4 py-2 rounded-full bg-white/20 hover:bg-white/30 active:bg-white/40 border border-white/30 text-white/90 transition"
-      >
-        {playing ? "Pause" : "Start"}
-      </button>
-      <p className="text-white/70 text-center text-sm">Tap start, then follow the orb — inhale, hold, exhale. A calm body learns best.</p>
-    </GlassCard>
-  );
-};
-
-const PoseCard = ({ title, cue, step, img }) => (
-  <motion.div
-    initial={{ y: 24, opacity: 0 }}
-    whileInView={{ y: 0, opacity: 1 }}
-    viewport={{ once: true, amount: 0.4 }}
-    transition={{ duration: 0.6, ease: "easeOut" }}
-    className="group"
-  >
-    <GlassCard className="p-6 md:p-8 grid md:grid-cols-[1fr,1.2fr] gap-6 items-center">
+    <section class="glass p-6 grid md:grid-cols-2 gap-4 items-center">
+      <img src="breath.jpg" alt="Breathwork" class="rounded-xl" onerror="this.style.display='none'">
       <div>
-        <div className="text-xs tracking-widest uppercase text-white/70">Phase {step}</div>
-        <h3 className="text-2xl md:text-3xl font-semibold text-white mb-2">{title}</h3>
-        <p className="text-white/80 leading-relaxed">{cue}</p>
+        <h3 class="text-2xl font-semibold mb-2">Settle into Stillness</h3>
+        <p>Before movement, we arrive. Try a 4‑2‑6 breath: inhale four, hold two, exhale six.</p>
+        <a href="https://wa.me/?text=Interested%20in%20Breathwork" target="_blank" class="mt-4 inline-block px-4 py-2 glass">Ask about Breathwork</a>
       </div>
-      <div className="relative aspect-[4/3] rounded-2xl overflow-hidden border border-white/20">
-        <SmartImage src={img} alt={title} className="absolute inset-0" />
-        {/* fallback minimalist silhouette is built into placeholder */}
-        <div className="absolute bottom-2 right-2 text-[11px] px-2 py-1 rounded-full bg-white/20 border border-white/30 text-white/80">
-          Guided visual
-        </div>
+    </section>
+
+    <section class="space-y-4">
+      <div class="glass p-4">
+        <img src="pose1.jpg" alt="Centering" class="rounded-xl mb-2" onerror="this.style.display='none'">
+        <h4 class="font-semibold">Centering</h4>
+        <p>Ground through the feet, lengthen the spine. Let the breath lead the body.</p>
       </div>
-    </GlassCard>
-  </motion.div>
-);
-
-const Testimonial = ({ quote, name }) => (
-  <GlassCard className="p-6">
-    <p className="text-white/90 leading-relaxed">“{quote}”</p>
-    <div className="mt-4 text-white/70 text-sm">— {name}</div>
-  </GlassCard>
-);
-
-const YogaOnePager = () => {
-  const { scrollYProgress } = useScroll();
-  const headerBg = useTransform(scrollYProgress, [0, 0.06], ["transparent", "rgba(255,255,255,0.06)"]);
-  const headerBorder = useTransform(scrollYProgress, [0, 0.06], ["rgba(255,255,255,0)", "rgba(255,255,255,0.25)"]);
-
-  const [gradientIndex, setGradientIndex] = useState(0);
-  useEffect(() => {
-    const i = setInterval(() => setGradientIndex((g) => (g + 1) % gradients.length), 5000);
-    return () => clearInterval(i);
-  }, []);
-
-  // Simple rotating testimonials
-  const quotes = useMemo(() => [
-    { quote: "Happy Souls turned my mornings into a ritual of joy.", name: "Aarav" },
-    { quote: "Best glassy-modern yoga site AND best class I've taken.", name: "Meera" },
-    { quote: "Breathwork finally clicked. Felt present all day.", name: "Ishaan" },
-  ], []);
-  const [qIdx, setQIdx] = useState(0);
-  useEffect(() => {
-    const t = setInterval(() => setQIdx((i) => (i + 1) % quotes.length), 4200);
-    return () => clearInterval(t);
-  }, [quotes.length]);
-
-  return (
-    <div className="min-h-screen text-white selection:bg-white/20">
-      <Background />
-      <ScrollProgress />
-
-      {/* Header */}
-      <motion.header
-        className="fixed top-4 left-1/2 -translate-x-1/2 z-40 w-[min(96%,1100px)]"
-        style={{ backgroundColor: headerBg, borderColor: headerBorder }}
-      >
-        <div className="backdrop-blur-xl border rounded-2xl px-4 py-3 md:px-6 md:py-3.5 flex items-center justify-between">
-          <div className="font-semibold tracking-wide">Happy Souls — Khushi Lekhwani</div>
-          <nav className="hidden md:flex gap-4 text-white/80">
-            <a href="#flow" className="hover:text-white transition">Flow</a>
-            <a href="#breath" className="hover:text-white transition">Breath</a>
-            <a href="#journey" className="hover:text-white transition">Journey</a>
-            <a href="#join" className="hover:text-white transition">Join</a>
-          </nav>
-          <div className="min-w-[160px]"><WhatsAppCTA label="WhatsApp to Join" preset="(Quick contact from header)" /></div>
-        </div>
-      </motion.header>
-
-      {/* Hero */}
-      <div className="pt-28 md:pt-36 pb-16">
-        <Section>
-          <GlassCard className="p-0 overflow-hidden">
-            <SmartImage src="./hero.jpg" alt="Happy Souls Yoga" className="h-[34vh] md:h-[42vh]" rounded="rounded-3xl" />
-            <div className="p-8 md:p-14 text-center">
-              <h1 className="text-4xl md:text-6xl font-bold leading-tight">
-                <span className={`bg-clip-text text-transparent bg-gradient-to-r ${gradients[gradientIndex]}`}>Happy Souls — Yoga by Khushi Lekhwani</span>
-              </h1>
-              <p className="mt-4 md:mt-6 text-white/80 max-w-2xl mx-auto">A guided, interactive one‑page journey that mirrors a real class — breathe, flow, strengthen, and soften. Scroll to begin.</p>
-              <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
-                <a href="#journey" className="px-5 py-3 rounded-full border border-white/30 hover:bg-white/20">Start the Journey</a>
-                {/* Replaced View Schedule with WhatsApp */}
-                <WhatsAppCTA label="Message on WhatsApp" preset="(From hero)" />
-              </div>
-            </div>
-          </GlassCard>
-        </Section>
+      <div class="glass p-4">
+        <img src="pose2.jpg" alt="Warm Flow" class="rounded-xl mb-2" onerror="this.style.display='none'">
+        <h4 class="font-semibold">Warm Flow</h4>
+        <p>Cat‑Cow to Sun Salutations. Move smooth, continuous, unhurried.</p>
       </div>
-
-      {/* Breath Coach */}
-      <div id="breath" className="py-8 md:py-14">
-        <Section>
-          <div className="grid md:grid-cols-2 gap-6 items-stretch">
-            <BreathingOrb />
-            <GlassCard className="p-0 overflow-hidden flex flex-col">
-              <SmartImage src="./breath.jpg" alt="Breathwork" className="h-56 md:h-full" />
-              <div className="p-6 md:p-8">
-                <h2 className="text-2xl md:text-3xl font-semibold">Settle into Stillness</h2>
-                <p className="mt-2 text-white/80">Before movement, we arrive. Try a 4‑2‑6 breath: inhale four, hold two, exhale six. Notice the shoulders soften, jaw unclench, and attention gather.</p>
-                <ul className="mt-4 space-y-2 text-white/80 text-sm">
-                  <li>• Keep the tongue relaxed on the roof of your mouth</li>
-                  <li>• Breathe quietly through the nose</li>
-                  <li>• On the exhale, imagine fogging a mirror — slow and smooth</li>
-                </ul>
-                <div className="mt-5"><WhatsAppCTA label="Ask about Breathwork" preset="Interested in Breathwork." /></div>
-              </div>
-            </GlassCard>
-          </div>
-        </Section>
+      <div class="glass p-4">
+        <img src="pose3.jpg" alt="Strength & Balance" class="rounded-xl mb-2" onerror="this.style.display='none'">
+        <h4 class="font-semibold">Strength & Balance</h4>
+        <p>Warrior II → Triangle → Tree. Steady gaze, soft face.</p>
       </div>
-
-      {/* Journey / Flow */}
-      <div id="journey" className="py-10 md:py-16">
-        <Section className="space-y-6">
-          <PoseCard step={1} title="Centering" cue="Ground through the feet, lengthen the spine. Place one hand on your heart, one on your belly. Let the breath lead the body." img="./pose1.jpg" />
-          <PoseCard step={2} title="Warm Flow" cue="Cat‑Cow to Sun Salutations. Move like honey — smooth, continuous, unhurried." img="./pose2.jpg" />
-          <PoseCard step={3} title="Strength & Balance" cue="Warrior II → Triangle → Tree. Steady gaze, soft face. Strength with ease." img="./pose3.jpg" />
-          <PoseCard step={4} title="Deep Rest" cue="Fold forward, then lie down. Scan each muscle like starlight washing over you. Shavasana to close." img="./pose4.jpg" />
-        </Section>
+      <div class="glass p-4">
+        <img src="pose4.jpg" alt="Deep Rest" class="rounded-xl mb-2" onerror="this.style.display='none'">
+        <h4 class="font-semibold">Deep Rest</h4>
+        <p>Fold forward, then lie down. Shavasana to close.</p>
       </div>
+    </section>
 
-      {/* Micro CTA */}
-      <div id="flow" className="py-4">
-        <Section>
-          <GlassCard className="p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-4">
-            <div>
-              <h3 className="text-xl md:text-2xl font-semibold">Weekly Live Classes • Online & Studio</h3>
-              <p className="text-white/80">Gentle, Vinyasa, and Breathwork. Beginner‑friendly and athlete‑approved.</p>
-            </div>
-            <div className="min-w-[220px]"><WhatsAppCTA label="Reserve via WhatsApp" preset="I'd like to reserve a spot." /></div>
-          </GlassCard>
-        </Section>
-      </div>
+    <section class="glass p-6 text-center">
+      <h3 class="text-xl font-semibold mb-2">Weekly Live Classes • Online & Studio</h3>
+      <p>Gentle, Vinyasa, and Breathwork. Beginner‑friendly and athlete‑approved.</p>
+      <a href="https://wa.me/?text=I%27d%20like%20to%20reserve%20a%20spot" target="_blank" class="mt-4 inline-block px-4 py-2 glass">Reserve via WhatsApp</a>
+    </section>
+  </main>
 
-      {/* Testimonials carousel */}
-      <div className="py-10 md:py-16">
-        <Section>
-          <div className="grid md:grid-cols-3 gap-6">
-            <AnimatePresence mode="wait">
-              <motion.div key={qIdx} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.5 }} className="md:col-span-2">
-                <Testimonial quote={quotes[qIdx].quote} name={quotes[qIdx].name} />
-              </motion.div>
-            </AnimatePresence>
-            <GlassCard className="p-6 flex flex-col justify-center">
-              <p className="text-white/90 font-medium">Why this page feels different</p>
-              <ul className="mt-3 text-white/80 text-sm space-y-2">
-                <li>• Glassmorphic UI that breathes</li>
-                <li>• Scroll‑synced animations that mirror class phases</li>
-                <li>• Interactive breath coach to calm your nervous system</li>
-              </ul>
-              <div className="mt-4"><WhatsAppCTA label="Share feedback on WhatsApp" preset="Sharing feedback about the page:" /></div>
-            </GlassCard>
-          </div>
-        </Section>
-      </div>
-
-      {/* Join / Schedule */}
-      <div id="join" className="pb-20">
-        <Section>
-          <GlassCard className="p-8 md:p-10">
-            <div className="grid md:grid-cols-[1.2fr,1fr] gap-8 items-start">
-              <div>
-                <h2 className="text-2xl md:text-3xl font-semibold">Join the next Happy Souls class</h2>
-                <p className="mt-2 text-white/80">Drop‑ins and packs available. Choose on‑site at the studio or join live online from anywhere.</p>
-
-                <div className="mt-6 grid sm:grid-cols-2 gap-3">
-                  {["Mon • Gentle Flow • 7:00 AM", "Wed • Vinyasa • 7:00 PM", "Fri • Breathwork • 6:30 AM", "Sun • Restore • 5:00 PM"].map((s, i) => (
-                    <label key={i} className="flex items-center gap-3 p-3 rounded-2xl bg-white/10 border border-white/20 cursor-pointer hover:bg-white/20 transition">
-                      <input name="slot" type="radio" className="accent-white" />
-                      <span className="text-white/90 text-sm">{s}</span>
-                    </label>
-                  ))}
-                </div>
-
-                <div className="mt-6 flex flex-col sm:flex-row gap-3">
-                  <WhatsAppCTA label="Book on WhatsApp" preset="I'd like to book a class." />
-                </div>
-              </div>
-
-              <div className="relative">
-                <div className="absolute inset-0 -z-10 blur-2xl rounded-3xl bg-gradient-to-tr from-white/30 to-white/0" />
-                <GlassCard className="p-6">
-                  <h4 className="text-lg font-semibold">What to bring</h4>
-                  <ul className="mt-3 space-y-2 text-white/80 text-sm">
-                    <li>• A mat (studio has limited spares)</li>
-                    <li>• Water & a light layer</li>
-                    <li>• An open mind</li>
-                  </ul>
-                  {/* Location section removed per request */}
-                </GlassCard>
-              </div>
-            </div>
-          </GlassCard>
-        </Section>
-      </div>
-
-      {/* Footer */}
-      <footer className="pb-10">
-        <Section>
-          <div className="text-center text-white/70 text-sm">
-            © {new Date().getFullYear()} Happy Souls • Instructor: Khushi Lekhwani
-          </div>
-        </Section>
-      </footer>
-    </div>
-  );
-};
-
-export default YogaOnePager;
+  <footer class="text-center text-white/70 p-4">
+    © <script>document.write(new Date().getFullYear())</script> Happy Souls • Instructor: Khushi Lekhwani
+  </footer>
+</body>
+</html>
