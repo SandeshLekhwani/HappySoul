@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>From Idea ➜ Production — Pick • Build • Demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <!-- Three.js Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <style>
+    /* STYLE GUIDE & VARIABLES
+      - A modern, dark, "glassmorphism" theme.
+      - Uses CSS variables for easy theme adjustments.
+      - Typography is based on the "Inter" font family.
+    */
+    :root {
+      --bg1: #0f1226;
+      --bg2: #021f2b;
+      --glass: #ffffff1a;
+      --stroke: #ffffff26;
+      --txt: #e6f6ff;
+      --muted: #b6c7d1;
+      --accent: #7cf6ff;
+      --hot: #ff6ea9;
+    }
+
+    html, body {
+      height: 100%;
+      overflow: hidden; /* Prevent scrollbars on the main body */
+    }
+
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      color: var(--txt);
+      /* BACKGROUND EFFECTS
+        - A complex, layered background using multiple radial gradients for a deep, atmospheric effect.
+        - A linear gradient provides the base colors.
+      */
+      background: radial-gradient(1200px 1200px at 10% -10%, #193a5d 0%, transparent 40%),
+                  radial-gradient(900px 900px at 110% 10%, #3a1b5f 0%, transparent 45%),
+                  radial-gradient(800px 800px at 50% 120%, #103747 0%, transparent 45%),
+                  linear-gradient(160deg, var(--bg1), var(--bg2));
+    }
+
+    /* Animated blobs for background visual interest */
+    .blob {
+      position: fixed;
+      filter: blur(60px);
+      opacity: .35;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .blob.b1 { width: 50vmax; height: 50vmax; left: -10vmax; top: -15vmax; background: radial-gradient(circle at 30% 30%, #7cf6ff, transparent 60%); }
+    .blob.b2 { width: 40vmax; height: 40vmax; right: -8vmax; top: -8vmax; background: radial-gradient(circle at 60% 40%, #9a7bff, transparent 60%); }
+    .blob.b3 { width: 45vmax; height: 45vmax; left: 10vmax; bottom: -15vmax; background: radial-gradient(circle at 50% 50%, #ff6ea9, transparent 60%); }
+
+    /* Subtle grain texture overlay */
+    .grain {
+      pointer-events: none;
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      opacity: .08;
+      mix-blend-mode: soft-light;
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23n)" opacity="0.5"/></svg>');
+      background-size: 320px 320px;
+    }
+
+    /* MAIN DECK & SLIDE STRUCTURE
+      - The .deck is the main container that centers the content.
+      - .slide elements are positioned absolutely and toggled for the presentation effect.
+    */
+    .deck { position: relative; width: 100vw; height: 100vh; display: grid; place-items: center; }
+    .slide { position: absolute; inset: 0; display: grid; grid-template-rows: auto 1fr; gap: 24px; padding: 48px; opacity: 0; transform: translateY(16px) scale(.98); transition: opacity .5s ease, transform .6s ease; pointer-events: none; }
+    .slide.active { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+
+    /* GLASSMORPHISM CARD STYLE
+      - The core of the visual style.
+      - Uses a semi-transparent background, box-shadow, and backdrop-filter for the frosted glass effect.
+    */
+    .glass {
+      margin: auto;
+      width: min(1200px, 92vw);
+      border-radius: 28px;
+      background: linear-gradient(180deg, #ffffff1a, #ffffff08);
+      box-shadow: 0 20px 80px #0009, inset 0 0 0 1px var(--stroke);
+      backdrop-filter: blur(14px) saturate(120%);
+      -webkit-backdrop-filter: blur(14px) saturate(120%);
+      overflow: hidden;
+    }
+
+    /* Typography */
+    h1 { font-size: clamp(28px, 4.5vw, 68px); line-height: 1.05; margin: 0; }
+    h2 { font-size: clamp(22px, 2.6vw, 34px); margin: 0 0 8px; }
+    p { color: var(--muted); font-size: clamp(14px, 1.3vw, 18px); }
+    h4 { margin: 12px 0 4px; color: var(--accent); }
+
+    .hero { padding: 36px; }
+    .headline { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+    .logo-hero { height: 54px; width: auto; filter: drop-shadow(0 8px 30px #00e0ff25); }
+
+    /* Responsive grid for the main options */
+    .options { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; padding: 12px 0 0; }
+    @media (max-width: 1000px) { .options { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 560px) { .options { grid-template-columns: 1fr; } }
+
+    .card { border: 1px solid var(--stroke); border-radius: 20px; padding: 18px; background: #ffffff10; transition: transform .25s ease, background .25s ease; cursor: pointer; }
+    .card:hover { transform: translateY(-4px); background: #ffffff16; }
+    .card h3 { margin: 6px 0 6px; font-size: clamp(18px, 1.6vw, 22px); }
+    .card p { margin: 0; }
+
+    /* Canvas for 3D shapes */
+    .card canvas { width: 100%; height: 80px; display: block; margin-bottom: 12px; }
+    
+
+    /* Fixed navigation controls */
+    .nav { position: fixed; right: 22px; bottom: 22px; z-index: 40; display: flex; gap: 10px; align-items: center; }
+    .btn { border: 1px solid var(--stroke); background: #ffffff18; color: var(--txt); padding: 10px 14px; border-radius: 12px; cursor: pointer; font-weight: 600; }
+    .btn:hover { background: #ffffff22; }
+    .progress { height: 6px; width: 160px; border-radius: 999px; background: #ffffff14; overflow: hidden; }
+    .bar { height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent), var(--hot)); transition: width .3s ease; }
+
+    /* Fixed brand/home button */
+    .brand { position: fixed; left: 22px; bottom: 22px; z-index: 40; display: flex; align-items: center; gap: 10px; }
+    .brand img { height: 26px; width: auto; opacity: .95; filter: drop-shadow(0 2px 10px #0006); }
+    .btn-home { border: 1px solid var(--stroke); background: #ffffff18; color: var(--txt); padding: 8px 12px; border-radius: 12px; cursor: pointer; font-weight: 600; margin-left: 8px; }
+    .btn-home:hover { background: #ffffff22; }
+
+    /* Slide transition animation */
+    @keyframes fadeUp { 0% { opacity: 0; transform: translateY(18px) scale(.98); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
+    .slide.active[data-anim="fadeUp"] { animation: fadeUp .6s ease both; }
+
+    /* FULL-PAGE OVERLAY PANEL STYLES */
+    .expand { margin-top: 16px; }
+    .panel {
+      position: fixed; inset: 0; z-index: 1; border: 1px solid var(--stroke); background: linear-gradient(180deg, #ffffff1a, #ffffff0f); box-shadow: 0 40px 120px #000a, inset 0 0 0 1px var(--stroke); border-radius: 24px; backdrop-filter: blur(14px) saturate(120%); -webkit-backdrop-filter: blur(14px) saturate(120%);
+      display: none; opacity: 0; transform: translateY(8px) scale(.98); transition: opacity .25s ease, transform .3s ease;
+    }
+    .panel.active { display: block; opacity: 1; transform: translateY(0) scale(1); }
+    .panel-inner { height: 100%; overflow: auto; padding: 22px; display: grid; grid-template-columns: 1fr; gap: 16px; }
+    .tool-links { display: flex; flex-wrap: wrap; gap: 10px; }
+    .chip { padding: 8px 12px; border-radius: 999px; border: 1px solid var(--stroke); background: #ffffff14; text-decoration: none; color: var(--txt); }
+    .chip:hover { background: #ffffff20; }
+    .start-btn { margin-top: 8px; }
+    .panel-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 8px; }
+    .close { border: 1px solid var(--stroke); background: #ffffff18; color: var(--txt); padding: 8px 12px; border-radius: 12px; cursor: pointer; font-weight: 600; }
+    .close:hover { background: #ffffff22; }
+
+    /* Backdrop for blurring the background when a panel is open */
+    .backdrop {
+      position: fixed; inset: 0; z-index: 45; background: rgba(6, 12, 26, .35); backdrop-filter: blur(10px) saturate(120%); -webkit-backdrop-filter: blur(10px) saturate(120%); opacity: 0; pointer-events: none; transition: opacity .25s ease;
+    }
+    .backdrop.show { opacity: 1; pointer-events: auto; }
+
+    /* Prevent body scrolling when a modal is open */
+    body.modal-open { overflow: hidden; }
+  </style>
+</head>
+<body>
+  <!-- Background elements -->
+  <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
+  <div class="grain"></div>
+  
+  <!-- Backdrop and Overlay containers for modal panels -->
+  <div class="backdrop" id="backdrop"></div>
+  <div id="overlay" aria-modal="true" role="dialog" style="position:fixed; inset:64px 32px 96px 32px; z-index:70; display:none;"></div>
+
+  <!-- Fixed brand/home button -->
+  <div class="brand">
+    <img src="https://experimentlabs.in/assets/Experimentlabs_logo-D8clN1f6.svg" alt="Experiment Labs Logo"/>
+    <button class="btn-home" id="home">🏠 Home</button>
+  </div>
+
+  <main class="deck" aria-live="polite">
+
+    <!-- Slide 1: Landing page with 4 product options -->
+    <section class="slide active" data-step="landing" data-anim="fadeUp">
+      <div class="glass hero">
+        <div class="headline">
+          <h1>Build the Future — Live, in 60 Minutes</h1>
+          <img class="logo-hero" src="https://experimentlabs.in/assets/Experimentlabs_logo-D8clN1f6.svg" alt="Experiment Labs logo"/>
+        </div>
+        <p>Pick one vision. We'll take it from idea → AI visuals → CAD concept → working no‑code app — then demo.</p>
+        <div class="options">
+          <div class="card option" data-go="nanofarm">
+            <canvas id="nanofarm-canvas"></canvas>
+            <h3>NanoFarm</h3><p>Pocket hydroponics pod + care app</p>
+          </div>
+          <div class="card option" data-go="biojewelry">
+            <canvas id="biojewelry-canvas"></canvas>
+            <h3>Smart Bio‑Jewellery</h3><p>Luxury health accessory + NFC profile</p>
+          </div>
+          <div class="card option" data-go="desk">
+            <canvas id="desk-canvas"></canvas>
+            <h3>Adaptive Desk</h3><p>Posture‑aware desk + productivity app</p>
+          </div>
+          <div class="card option" data-go="bot">
+            <canvas id="bot-canvas"></canvas>
+            <h3>Mini Cleaning Bot</h3><p>Compact sweeper + route planner app</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- This container holds ALL panel content. JS will move a panel to the #overlay when it's opened. -->
+    <div id="panel-host" style="display:none;">
+        <!-- Main Panels -->
+        <div class="panel" data-panel="nanofarm-main">
+            <div class="panel-inner">
+              <div>
+                <div class="panel-head"><h2 style="margin:0">🌱 NanoFarm — What you’ll build</h2><button class="close" data-close>✕ Close</button></div>
+                <ul>
+                  <li>AI renders: product, context, packaging</li>
+                  <li>CAD concept with cartridge bays, LED channel</li>
+                  <li>Lovable.dev app with Supabase + ChatGPT tips</li>
+                </ul>
+                <h3>Copy‑paste prompts</h3>
+                <p><b>Midjourney:</b> <code>compact hydroponic pod, frosted window, soft LED, minimal Scandinavian, photoreal, studio sweep --ar 3:2</code></p>
+                <p><b>Fusion 360 AI:</b> <code>Enclosure 120x120x180, 2.5mm wall, two 30x70 pods, 8mm LED channel, snap lid</code></p>
+                <p><b>Lovable.dev:</b> <code>Pages(Home,Log,Tips,Profile); Supabase plants, logs; POST /plant-tip via OpenAI</code></p>
+                <button class="btn start-btn" data-start-route="nanofarm">Start this build ▶</button>
+              </div>
+            </div>
+        </div>
+        <div class="panel" data-panel="biojewelry-main">
+            <div class="panel-inner">
+              <div>
+                <div class="panel-head"><h2 style="margin:0">💍 Smart Bio‑Jewellery — What you’ll build</h2><button class="close" data-close>✕ Close</button></div>
+                <ul>
+                  <li>AI renders: ring/pendant + premium packaging</li>
+                  <li>CAD with sensor cavity + ceramic liner concept</li>
+                  <li>NFC tap → health card app (Lovable.dev + Supabase)</li>
+                </ul>
+                <h3>Copy‑paste prompts</h3>
+                <p><b>Midjourney:</b> <code>titanium ring, ceramic liner, gold PVD edge, sensor window 10x3mm, photoreal studio --ar 1:1</code></p>
+                <p><b>Fusion 360 AI:</b> <code>Ring width 6.5mm, wall 2.0mm, inner bevel 0.6mm, cavity 10x3x2.5</code></p>
+                <p><b>Lovable.dev:</b> <code>Pages(Home,Tips,Profile,Emergency); tables users, readings; POST /tip {hrv,temp,steps}</code></p>
+                <button class="btn start-btn" data-start-route="biojewelry">Start this build ▶</button>
+              </div>
+            </div>
+        </div>
+        <div class="panel" data-panel="desk-main">
+            <div class="panel-inner">
+              <div>
+                <div class="panel-head"><h2 style="margin:0">🖥 Adaptive Desk — What you’ll build</h2><button class="close" data-close>✕ Close</button></div>
+                <ul>
+                  <li>AI renders: desk + workspace + flat‑pack packaging</li>
+                  <li>CAD frame with lift + control panel concept</li>
+                  <li>Lovable.dev dashboard with scheduler + tips</li>
+                </ul>
+                <h3>Copy‑paste prompts</h3>
+                <p><b>Midjourney:</b> <code>motorized standing desk, curved glassmorphic surface, display strip, matte black + teal, photoreal --ar 16:9</code></p>
+                <p><b>Fusion 360 AI:</b> <code>Frame 1200x700 top, lift 600–1200mm, cable tray, control panel mount</code></p>
+                <p><b>Lovable.dev:</b> <code>Pages(Dashboard,Scheduler,Insights); sessions table; POST /desk-tip {posture_score,meeting_load}</code></p>
+                <button class="btn start-btn" data-start-route="desk">Start this build ▶</button>
+              </div>
+            </div>
+        </div>
+        <div class="panel" data-panel="bot-main">
+            <div class="panel-inner">
+              <div>
+                <div class="panel-head"><h2 style="margin:0">🤖 Mini Cleaning Bot — What you’ll build</h2><button class="close" data-close>✕ Close</button></div>
+                <ul>
+                  <li>AI renders: bot + home scene + compact packaging</li>
+                  <li>CAD chassis with dock & brush/mop modules</li>
+                  <li>Lovable.dev app with map, schedules, reports</li>
+                </ul>
+                <h3>Copy‑paste prompts</h3>
+                <p><b>Midjourney:</b> <code>palm‑size triangular cleaning bot, glossy white + graphite, dock, photoreal --ar 3:2</code></p>
+                <p><b>Fusion 360 AI:</b> <code>Chassis Ø180 x H52mm, brush arm mount, pogo-pin charging contacts, dock alignment fins</code></p>
+                <p><b>Lovable.dev:</b> <code>Pages(Map,Schedules,Reports); runs table; POST /clean-tip {dirt_score,rooms}</code></p>
+                <button class="btn start-btn" data-start-route="bot">Start this build ▶</button>
+              </div>
+            </div>
+        </div>
+
+        <!-- NanoFarm Task Panels -->
+        <div class="panel" data-panel="nf-task-1"><div class="panel-inner"><div><div class="panel-head"><h2 style="margin:0">Product Concept Art</h2><button class="close" data-close>✕ Close</button></div><h4>Step 1: Define Core Keywords</h4><p>Start with the most important terms: <code>hydroponic pod</code>, <code>minimal</code>, <code>Scandinavian</code>.</p><h4>Step 2: Add Material & Lighting</h4><p>Specify textures and light sources like <code>frosted acrylic</code>, <code>matte white shell</code>, <code>soft internal grow light</code>. This guides the AI's rendering engine.</p><h4>Step 3: Set the Scene & Ratio</h4><p>Use <code>studio soft light</code> and <code>photoreal</code> for a professional product shot. Use <code>--ar 3:2</code> for a landscape image.</p></div></div></div>
+        <div class="panel" data-panel="nf-task-2"><div class="panel-inner"><div><div class="panel-head"><h2 style="margin:0">Context Concept Art</h2><button class="close" data-close>✕ Close</button></div><h4>Step 1: Place the Product</h4><p>Describe the environment: <code>on work desk beside laptop and mug</code>.</p><h4>Step 2: Define the Mood</h4><p>Set the time of day and atmosphere: <code>morning natural light</code>, <code>subtle condensation</code>.</p><h4>Step 3: Refine Realism</h4><p>Add final touches for photorealism: <code>realistic shadow</code>, <code>shallow depth of field</code>.</p></div></div></div>
+        <div class="panel" data-panel="nf-task-3"><div class="panel-inner"><div><div class="panel-head"><h2 style="margin:0">Packaging Concept Art</h2><button class="close" data-close>✕ Close</button></div><h4>Step 1: Describe the Box</h4><p>Start with the main container: <code>eco kraft box</code>, <code>premium packaging design</code>.</p><h4>Step 2: Add Branding & Info</h4><p>Specify the visual elements on the box: <code>green gradient label</code>, <code>QR for setup</code>.</p><h4>Step 3: Detail the Contents</h4><p>Describe what's inside for a richer scene: <code>seed packets + nutrient pods neatly arranged</code>.</p></div></div></div>
+        <div class="panel" data-panel="nf-task-4"><div class="panel-inner"><div><div class="panel-head"><h2 style="margin:0">CAD: Main Body</h2><button class="close" data-close>✕ Close</button></div><h4>Step 1: Define Overall Shape</h4><p>Use Fusion 360's generative design tools or manual modeling to create a box: <code>Enclosure 120x120x180mm</code>.</p><h4>Step 2: Shell & Fillet</h4><p>Use the Shell command to create a <code>2.5mm wall</code> thickness. Use the Fillet tool to round the window edges with an <code>R=8mm</code> radius.</p><h4>Step 3: Add Features</h4><p>Model a <code>snap-fit lid</code> and a groove for a silicone gasket to ensure it's watertight.</p></div></div></div>
+        <div class="panel" data-panel="nf-task-5"><div class="panel-inner"><div><div class="panel-head"><h2 style="margin:0">CAD: Cartridges</h2><button class="close" data-close>✕ Close</button></div><h4>Step 1: Model the Pods</h4><p>Create two separate bodies for the pods with dimensions <code>30x30x70mm</code>.</p><h4>Step 2: Design the Interface</h4><p>Model a <code>keyed bayonet</code> mount on the pods and corresponding slots in the main body for a secure twist-lock fit.</p><h4>Step 3: Ensure Drainage</h4><p>Create a slight <code>2° slope</code> on the internal drip-tray to guide excess water away.</p></div></div></div>
+        <div class="panel" data-panel="nf-task-6"><div class="panel-inner"><div><div class="panel-head"><h2 style="margin:0">CAD: Lighting</h2><button class="close" data-close>✕ Close</button></div><h4>Step 1: Create the Channel</h4><p>Extrude a cut inside the main body to create an <code>8mm wide channel</code> for the LED strip.</p><h4>Step 2: Design the Diffuser</h4><p>Model a thin <code>1.5mm PMMA diffuser</code> that will snap into place over the LED channel to soften the light.</p><h4>Step 3: Plan for Heat</h4><p>Add small, flat surfaces in the model to represent where <code>thermal pads</code> will connect the LED strip to the main shell for heat dissipation.</p></div></div></div>
+        <div class="panel" data-panel="nf-task-7"><div class="panel-inner"><div><div class="panel-head"><h2 style="margin:0">App: Pages</h2><button class="close" data-close>✕ Close</button></div><h4>Step 1: Scaffold Pages</h4><p>In Lovable.dev, use the page creator to generate four pages: <code>Home</code>, <code>Grow Log</code>, <code>Tips</code>, and <code>Profile</code>.</p><h4>Step 2: Build the UI</h4><p>Drag and drop components. On `Home`, add status cards. On `Grow Log`, add a list component. Use a form component for the `Profile` page.</p></div></div></div>
+        <div class="panel" data-panel="nf-task-8"><div class="panel-inner"><div><div class="panel-head"><h2 style="margin:0">App: Supabase DB</h2><button class="close" data-close>✕ Close</button></div><h4>Step 1: Create Tables</h4><p>In your Supabase project, create two tables: `plants` (with columns `id`, `name`, `species`) and `logs` (with `id`, `plant_id`, `date`, `moisture`, `light`, `nutrients_ml`).</p><h4>Step 2: Connect to Lovable</h4><p>In Lovable.dev, add Supabase as a data source and bind the `Grow Log` list to the `logs` table.</p></div></div></div>
+        <div class="panel" data-panel="nf-task-9"><div class="panel-inner"><div><div class="panel-head"><h2 style="margin:0">App: AI Tips</h2><button class="close" data-close>✕ Close</button></div><h4>Step 1: Create an Action</h4><p>In Lovable.dev, create a new server action named `plant-tip`.</p><h4>Step 2: Add OpenAI Call</h4><p>Inside the action, use the OpenAI module to make a call. The prompt should be: "Given a ${species} plant with ${moisture}% moisture and ${light} lux, give one actionable tip."</p><h4>Step 3: Create Endpoint</h4><p>Expose this action as a `POST` endpoint `/plant-tip` that can be called from your app's frontend.</p></div></div></div>
+        
+        <!-- Bio-Jewellery Task Panels -->
+        <div class="panel" data-panel="bj-task-1"><div class="panel-inner"><div><div class="panel-head"><h2 style="margin:0">Form Concept Art</h2><button class="close" data-close>✕ Close</button></div><h4>Step 1: Define the Product</h4><p>Start with the core concept: <code>luxury titanium ring</code>.</p><h4>Step 2: Specify Materials</h4><p>Add details about the finish and components: <code>ceramic inner liner</code>, <code>polished gold PVD edge</code>.</p><h4>Step 3: Add Technical Details</h4><p>Include functional elements for realism: <code>micro-sensor window</code>. Use <code>--ar 1:1</code> for a square, focused shot.</p></div></div></div>
+        <div class="panel" data-panel="bj-task-2"><div class="panel-inner"><div><div class="panel-head"><h2 style="margin:0">Lifestyle Concept Art</h2><button class="close" data-close>✕ Close</button></div><h4>Step 1: Set the Scene</h4><p>Place the ring in a high-end context: <code>on marble tray</code>.</p><h4>Step 2: Control the Lighting</h4><p>Define the mood with lighting: <code>soft morning light</code>, <code>shallow depth of field</code>.</p><h4>Step 3: Define the Style</h4><p>Tell the AI the desired aesthetic: <code>premium editorial style</code> for a magazine-quality image.</p></div></div></div>
+        <div class="panel" data-panel="bj-task-3"><div class="panel-inner"><div><div class="panel-head"><h2 style="margin:0">Packaging Concept Art</h2><button class="close" data-close>✕ Close</button></div><h4>Step 1: Design the Box</h4><p>Describe the packaging experience: <code>velvet-lined drawer box</code>.</p><h4>Step 2: Add Branding</h4><p>Specify the branding elements: <code>embossed logo</code>.</p><h4>Step 3: Show the Contents</h4><p>Include other items that come with the product: <code>NFC card</code>, <code>glassmorphic instruction card</code>.</p></div></div></div>
+        <div class="panel" data-panel="bj-task-4"><div class="panel-inner"><div><div class="panel-head"><h2 style="margin:0">CAD: Geometry</h2><button class="close" data-close>✕ Close</button></div><h4>Step 1: Revolve the Profile</h4><p>Sketch a cross-section of the ring and use the Revolve tool to create the main band with a <code>width of 6.5mm</code> and <code>2.0mm wall</code>.</p><h4>Step 2: Create the Cavity</h4><p>Use an extruded cut to create the internal <code>10x3mm</code> cavity for the electronics.</p></div></div></div>
+        <div class="panel" data-panel="bj-task-5"><div class="panel-inner"><div><div class="panel-head"><h2 style="margin:0">CAD: Materials</h2><button class="close" data-close>✕ Close</button></div><h4>Step 1: Assign Body Materials</h4><p>In Fusion 360's materials library, assign <code>Titanium (Ti-6Al-4V)</code> to the outer shell.</p><h4>Step 2: Assign Liner Material</h4><p>Assign <code>Zirconia Ceramic</code> to the inner liner for a hypoallergenic and premium feel.</p><h4>Step 3: Specify Finishes</h4><p>In the rendering workspace, apply <code>PVD (Physical Vapor Deposition)</code> appearances like gold or graphite to the desired surfaces.</p></div></div></div>
+        <div class="panel" data-panel="bj-task-6"><div class="panel-inner"><div><div class="panel-head"><h2 style="margin:0">CAD: NFC</h2><button class="close" data-close>✕ Close</button></div><h4>Step 1: Model the Tag</h4><p>Create a simplified body representing the thin, circular <code>13.56MHz NFC tag</code> and place it within the ceramic liner in the CAD assembly.</p><h4>Step 2: Program the Tag</h4><p>Use an NFC writer app on a smartphone to program a real tag to open the URL of your web app.</p></div></div></div>
+        <div class="panel" data-panel="bj-task-7"><div class="panel-inner"><div><div class="panel-head"><h2 style="margin:0">App: Pages</h2><button class="close" data-close>✕ Close</button></div><h4>Step 1: Scaffold Pages</h4><p>In Lovable.dev, create four pages: <code>Home</code>, <code>Wellness Tips</code>, <code>Profile</code>, and <code>Emergency Card</code>.</p><h4>Step 2: Design for Purpose</h4><p>The `Emergency Card` page should be public and read-only, displaying critical info. The other pages should require a login.</p></div></div></div>
+        <div class="panel" data-panel="bj-task-8"><div class="panel-inner"><div><div class="panel-head"><h2 style="margin:0">App: Supabase DB</h2><button class="close" data-close>✕ Close</button></div><h4>Step 1: Create Tables</h4><p>Create a `users` table and a `readings` table. The `users` table should have Row Level Security (RLS) enabled so users can only see their own data.</p><h4>Step 2: Bind Data</h4><p>Connect the `Profile` page form to the `users` table, and a chart on the `Home` page to the `readings` table.</p></div></div></div>
+        <div class="panel" data-panel="bj-task-9"><div class="panel-inner"><div><div class="panel-head"><h2 style="margin:0">App: AI Coach</h2><button class="close" data-close>✕ Close</button></div><h4>Step 1: Create the Action</h4><p>Create a Lovable.dev server action called `get-wellness-tip`.</p><h4>Step 2: Write the Prompt</h4><p>Use the OpenAI module with a prompt like: "Based on HRV: ${hrv}, Temp: ${temp}, and Steps: ${steps}, give one short, encouraging wellness tip."</p><h4>Step 3: Call the Action</h4><p>Add a button on the `Wellness Tips` page that calls this action and displays the result.</p></div></div></div>
+
+        <!-- Adaptive Desk Task Panels -->
+        <div class="panel" data-panel="ad-task-1"><div class="panel-inner"><div><div class="panel-head"><h2 style="margin:0">Desk Concept Art</h2><button class="close" data-close>✕ Close</button></div><h4>Step 1: Define Core Concept</h4><p>Start with the basics: <code>motorized standing desk</code>.</p><h4>Step 2: Specify Premium Materials</h4><p>Add high-end features: <code>curved glassmorphic surface</code>, <code>embedded display strip</code>.</p><h4>Step 3: Set Style & Ratio</h4><p>Define the aesthetic: <code>matte black + teal accent</code>, <code>futuristic minimal render</code>. Use <code>--ar 16:9</code> for a widescreen shot.</p></div></div></div>
+        <div class="panel" data-panel="ad-task-2"><div class="panel-inner"><div><div class="panel-head"><h2 style="margin:0">Workspace Concept Art</h2><button class="close" data-close>✕ Close</button></div><h4>Step 1: Create the Scene</h4><p>Describe the environment: <code>home office scene</code>, <code>daylight from window</code>.</p><h4>Step 2: Show Action</h4><p>Make the image dynamic: <code>desk changing height</code>.</p><h4>Step 3: Define the Vibe</h4><p>Set the mood: <code>productivity vibe</code>, <code>clean setup</code>.</p></div></div></div>
+        <div class="panel" data-panel="ad-task-3"><div class="panel-inner"><div><div class="panel-head"><h2 style="margin:0">Packaging Concept Art</h2><button class="close" data-close>✕ Close</button></div><h4>Step 1: Design the Box</h4><p>Specify the type of packaging: <code>flat-pack box</code> for efficient shipping.</p><h4>Step 2: Detail the Inserts</h4><p>Describe the protective materials: <code>biodegradable foam inserts</code>.</p><h4>Step 3: Add Unboxing Elements</h4><p>Include user-facing items: <code>assembly card with QR to app</code>.</p></div></div></div>
+        <div class="panel" data-panel="ad-task-4"><div class="panel-inner"><div><div class="panel-head"><h2 style="margin:0">CAD: Frame</h2><button class="close" data-close>✕ Close</button></div><h4>Step 1: Model the Top</h4><p>Create a sketch for the <code>1200x700mm</code> top surface.</p><h4>Step 2: Design the Legs</h4><p>Model the <code>dual-motor lift</code> legs, ensuring the assembly has a stroke (range of motion) from <code>600mm to 1200mm</code>.</p><h4>Step 3: Test for Load</h4><p>Use simulation tools in Fusion 360 to apply a static stress test to ensure the frame can handle an <code>80kg load</code>.</p></div></div></div>
+        <div class="panel" data-panel="ad-task-5"><div class="panel-inner"><div><div class="panel-head"><h2 style="margin:0">CAD: Controls</h2><button class="close" data-close>✕ Close</button></div><h4>Step 1: Model the Panel</h4><p>Create a simple body to represent the <code>capacitive control panel</code> and place it on the underside of the desk.</p><h4>Step 2: Plan for Safety</h4><p>In the assembly, add a small component representing a gyroscope/accelerometer for <code>anti-collision</code> detection.</p></div></div></div>
+        <div class="panel" data-panel="ad-task-6"><div class="panel-inner"><div><div class="panel-head"><h2 style="margin:0">CAD: Shell</h2><button class="close" data-close>✕ Close</button></div><h4>Step 1: Assign Materials</h4><p>Apply an <code>Aluminum</code> appearance to the legs and <code>Tempered Glass</code> to the top surface.</p><h4>Step 2: Model Accessories</h4><p>Design a <code>PET felt cable tray</code> that can be attached to the frame for clean cable management.</p></div></div></div>
+        <div class="panel" data-panel="ad-task-7"><div class="panel-inner"><div><div class="panel-head"><h2 style="margin:0">App: Pages</h2><button class="close" data-close>✕ Close</button></div><h4>Step 1: Build the Dashboard</h4><p>Create a `Dashboard` page with a large display for current height and a gauge for posture score.</p><h4>Step 2: Create the Scheduler</h4><p>On the `Scheduler` page, integrate a calendar component to let users plan sit/stand times.</p></div></div></div>
+        <div class="panel" data-panel="ad-task-8"><div class="panel-inner"><div><div class="panel-head"><h2 style="margin:0">App: Supabase DB</h2><button class="close" data-close>✕ Close</button></div><h4>Step 1: Create Tables</h4><p>Create a `users` table and a `sessions` table (`id`, `user_id`, `start`, `end`, `posture_score`, `avg_height_mm`).</p><h4>Step 2: Enable RLS</h4><p>Enable Row Level Security on the `sessions` table so users can only access their own session data.</p></div></div></div>
+        <div class="panel" data-panel="ad-task-9"><div class="panel-inner"><div><div class="panel-head"><h2 style="margin:0">App: AI Coach</h2><button class="close" data-close>✕ Close</button></div><h4>Step 1: Create the Action</h4><p>In Lovable.dev, create a server action `get-desk-plan`.</p><h4>Step 2: Write the Prompt</h4><p>Use the OpenAI module with a prompt: "My posture score today is ${posture_score}/100 and my meeting load is ${meeting_load} hours. Suggest a simple sit/stand plan."</p><h4>Step 3: Display the Tip</h4><p>On the `Insights` page, call this action and display the generated plan.</p></div></div></div>
+
+        <!-- Mini Cleaning Bot Task Panels -->
+        <div class="panel" data-panel="bot-task-1"><div class="panel-inner"><div><div class="panel-head"><h2 style="margin:0">Form Concept Art</h2><button class="close" data-close>✕ Close</button></div><h4>Step 1: Define Size & Shape</h4><p>Start with <code>palm-size</code> and <code>rounded triangular body</code> to define the unique form factor.</p><h4>Step 2: Add Features & Materials</h4><p>Include visual details like <code>side brush</code> and materials like <code>glossy white + graphite</code>.</p><h4>Step 3: Set the Scene</h4><p>Specify <code>dock station</code> and <code>photoreal product shot</code> for a clean, commercial image.</p></div></div></div>
+        <div class="panel" data-panel="bot-task-2"><div class="panel-inner"><div><div class="panel-head"><h2 style="margin:0">Home Scene Concept Art</h2><button class="close" data-close>✕ Close</button></div><h4>Step 1: Show, Don't Tell</h4><p>Instead of just showing the robot, show it in action: <code>robot navigating under sofa</code>.</p><h4>Step 2: Set the Mood</h4><p>Use lighting to create a cozy, homey feel: <code>soft afternoon light</code>.</p><h4>Step 3: Add Realism</h4><p>Include <code>realistic shadows</code> to ground the robot in the scene.</p></div></div></div>
+        <div class="panel" data-panel="bot-task-3"><div class="panel-inner"><div><div class="panel-head"><h2 style="margin:0">Packaging Concept Art</h2><button class="close" data-close>✕ Close</button></div><h4>Step 1: Design the Box</h4><p>Describe the physical packaging: <code>compact retail box with handle</code>.</p><h4>Step 2: Specify Materials</h4><p>Define the desired brand feel: <code>eco materials</code>, <code>minimalist design</code>.</p><h4>Step 3: Add Key Info</h4><p>Include important unboxing elements: <code>QR setup card</code>.</p></div></div></div>
+        <div class="panel" data-panel="bot-task-4"><div class="panel-inner"><div><div class="panel-head"><h2 style="margin:0">CAD: Chassis</h2><button class="close" data-close>✕ Close</button></div><h4>Step 1: Model the Body</h4><p>Create the main body with a <code>diameter of 180mm</code> and a <code>height of 52mm</code> to ensure it's compact.</p><h4>Step 2: Ensure Clearance</h4><p>Design the wheels and body to maintain a minimum <code>ground clearance of 8mm</code> to navigate small obstacles.</p></div></div></div>
+        <div class="panel" data-panel="bot-task-5"><div class="panel-inner"><div><div class="panel-head"><h2 style="margin:0">CAD: Drive</h2><button class="close" data-close>✕ Close</button></div><h4>Step 1: Design Drive System</h4><p>Model two main drive wheels and a front <code>caster wheel</code> for maneuverability.</p><h4>Step 2: Add Cleaning Tools</h4><p>Model the <code>80mm side brush</code> and a mount for a removable <code>micro-mop pad</code>.</p></div></div></div>
+        <div class="panel" data-panel="bot-task-6"><div class="panel-inner"><div><div class="panel-head"><h2 style="margin:0">CAD: Dock</h2><button class="close" data-close>✕ Close</button></div><h4>Step 1: Model the Dock</h4><p>Design the <code>160x90x70mm</code> charging dock.</p><h4>Step 2: Add Charging Contacts</h4><p>Model the spring-loaded <code>pogo pins</code> on the dock and corresponding contact plates on the robot.</p><h4>Step 3: Add Convenience</h4><p>Include a channel on the back of the dock for <code>cable management</code>.</p></div></div></div>
+        <div class="panel" data-panel="bot-task-7"><div class="panel-inner"><div><div class="panel-head"><h2 style="margin:0">App: Pages</h2><button class="close" data-close>✕ Close</button></div><h4>Step 1: Build the Map</h4><p>On the `Map` page, use a custom component or an image to display a simplified floor plan.</p><h4>Step 2: Create Scheduling</h4><p>On the `Schedules` page, use a form and a list to allow users to create and view cleaning schedules (e.g., "Clean Kitchen at 10 PM on weekdays").</p></div></div></div>
+        <div class="panel" data-panel="bot-task-8"><div class="panel-inner"><div><div class="panel-head"><h2 style="margin:0">App: Supabase DB</h2><button class="close" data-close>✕ Close</button></div><h4>Step 1: Create Tables</h4><p>Create a `users` table and a `runs` table to store history of cleaning jobs.</p><h4>Step 2: Bind Data to Reports</h4><p>On the `Reports` page, use a chart component to visualize data from the `runs` table, like `area_m2` cleaned per week.</p></div></div></div>
+        <div class="panel" data-panel="bot-task-9"><div class="panel-inner"><div><div class="panel-head"><h2 style="margin:0">App: AI Plans</h2><button class="close" data-close>✕ Close</button></div><h4>Step 1: Create the Action</h4><p>Create a Lovable.dev server action `get-cleaning-plan`.</p><h4>Step 2: Write the Prompt</h4><p>Use the OpenAI module: "My robot reported a dirt score of ${dirt_score} in these rooms: ${rooms}. Suggest a smart cleaning plan for the week."</p><h4>Step 3: Display the Plan</h4><p>Add a button on the `Reports` page to call this action and show the AI-generated plan.</p></div></div></div>
+
+    </div>
+
+
+    <!-- ROUTE: NanoFarm -->
+    <section class="slide" data-step="nf-1" data-anim="fadeUp" data-route="nanofarm">
+      <div class="glass hero">
+        <h2>NanoFarm — 1. Concept Art</h2>
+        <div class="options" style="grid-template-columns:repeat(3,1fr)">
+          <div class="card" data-panel-id="nf-task-1">
+            <h3>Product</h3><p><code>... minimal Scandinavian style, studio soft light --ar 3:2</code></p>
+          </div>
+          <div class="card" data-panel-id="nf-task-2">
+            <h3>Context</h3><p><code>... on work desk beside laptop, morning natural light ...</code></p>
+          </div>
+          <div class="card" data-panel-id="nf-task-3">
+            <h3>Packaging</h3><p><code>... eco kraft box, green gradient label, QR for setup ...</code></p>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="slide" data-step="nf-2" data-anim="fadeUp" data-route="nanofarm">
+        <div class="glass hero">
+            <h2>NanoFarm — 2. CAD & Dimensions</h2>
+            <div class="options" style="grid-template-columns:repeat(3,1fr)">
+              <div class="card" data-panel-id="nf-task-4">
+                <h3>Main Body</h3><p>Footprint 120×120mm; height 180mm; wall 2.5mm...</p>
+              </div>
+              <div class="card" data-panel-id="nf-task-5">
+                <h3>Cartridges</h3><p>Two pods 30×30×70mm; keyed bayonet; drip‑tray...</p>
+              </div>
+              <div class="card" data-panel-id="nf-task-6">
+                <h3>Lighting</h3><p>LED channel 8mm; PMMA diffuser 1.5mm; thermal pads...</p>
+              </div>
+            </div>
+        </div>
+    </section>
+    <section class="slide" data-step="nf-3" data-anim="fadeUp" data-route="nanofarm">
+        <div class="glass hero">
+            <h2>NanoFarm — 3. No-Code App</h2>
+            <div class="options" style="grid-template-columns:repeat(3,1fr)">
+              <div class="card" data-panel-id="nf-task-7">
+                <h3>Pages</h3><p>Home (status), Grow Log, Tips, Profile</p>
+              </div>
+              <div class="card" data-panel-id="nf-task-8">
+                <h3>Supabase DB</h3><p><code>plants(id,name)</code><br><code>logs(id,plant_id,moisture...)</code></p>
+              </div>
+              <div class="card" data-panel-id="nf-task-9">
+                <h3>AI Tips</h3><p><code>POST /plant-tip { species, moisture, light } ...</code></p>
+              </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ROUTE: Bio-Jewellery -->
+    <section class="slide" data-step="bj-1" data-anim="fadeUp" data-route="biojewelry">
+        <div class="glass hero">
+            <h2>Smart Bio-Jewellery — 1. Concept Art</h2>
+            <div class="options" style="grid-template-columns:repeat(3,1fr)">
+              <div class="card" data-panel-id="bj-task-1">
+                <h3>Form</h3><p><code>... luxury titanium ring, micro‑sensor window ...</code></p>
+              </div>
+              <div class="card" data-panel-id="bj-task-2">
+                <h3>Lifestyle</h3><p><code>... on marble tray, soft morning light, editorial style ...</code></p>
+              </div>
+              <div class="card" data-panel-id="bj-task-3">
+                <h3>Packaging</h3><p><code>... velvet‑lined drawer box, embossed logo, NFC card ...</code></p>
+              </div>
+            </div>
+        </div>
+    </section>
+     <section class="slide" data-step="bj-2" data-anim="fadeUp" data-route="biojewelry">
+        <div class="glass hero">
+            <h2>Bio-Jewellery — 2. CAD & Materials</h2>
+            <div class="options" style="grid-template-columns:repeat(3,1fr)">
+              <div class="card" data-panel-id="bj-task-4">
+                <h3>Geometry</h3><p>Band 6.5mm; wall 2.0mm; sensor cavity 10×3mm.</p>
+              </div>
+              <div class="card" data-panel-id="bj-task-5">
+                <h3>Materials</h3><p>Ti‑6Al‑4V shell; zirconia ceramic liner; PVD finishes.</p>
+              </div>
+              <div class="card" data-panel-id="bj-task-6">
+                <h3>NFC</h3><p>13.56MHz tag in liner; app opens on tap.</p>
+              </div>
+            </div>
+        </div>
+    </section>
+     <section class="slide" data-step="bj-3" data-anim="fadeUp" data-route="biojewelry">
+        <div class="glass hero">
+            <h2>Bio-Jewellery — 3. No-Code App</h2>
+            <div class="options" style="grid-template-columns:repeat(3,1fr)">
+              <div class="card" data-panel-id="bj-task-7">
+                <h3>Pages</h3><p>Home, Wellness Tips, Profile, Emergency Card</p>
+              </div>
+              <div class="card" data-panel-id="bj-task-8">
+                <h3>Supabase DB</h3><p><code>users(id,name,blood_type)</code><br><code>readings(...)</code></p>
+              </div>
+              <div class="card" data-panel-id="bj-task-9">
+                <h3>AI Coach</h3><p><code>POST /tip { hrv, temp, steps }</code> → 1‑line guidance</p>
+              </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ROUTE: Adaptive Desk -->
+    <section class="slide" data-step="ad-1" data-anim="fadeUp" data-route="desk">
+        <div class="glass hero">
+            <h2>Adaptive Desk — 1. Concept Art</h2>
+            <div class="options" style="grid-template-columns:repeat(3,1fr)">
+              <div class="card" data-panel-id="ad-task-1">
+                <h3>Desk</h3><p><code>... motorized standing desk, curved glassmorphic surface ...</code></p>
+              </div>
+              <div class="card" data-panel-id="ad-task-2">
+                <h3>Workspace</h3><p><code>... home office scene, desk changing height ...</code></p>
+              </div>
+              <div class="card" data-panel-id="ad-task-3">
+                <h3>Packaging</h3><p><code>... flat‑pack box, biodegradable foam, assembly card ...</code></p>
+              </div>
+            </div>
+        </div>
+    </section>
+    <section class="slide" data-step="ad-2" data-anim="fadeUp" data-route="desk">
+        <div class="glass hero">
+            <h2>Adaptive Desk — 2. Mechanics & Dimensions</h2>
+            <div class="options" style="grid-template-columns:repeat(3,1fr)">
+              <div class="card" data-panel-id="ad-task-4">
+                <h3>Frame</h3><p>Top 1200×700mm; dual‑motor lift; stroke 600–1200mm...</p>
+              </div>
+              <div class="card" data-panel-id="ad-task-5">
+                <h3>Controls</h3><p>Capacitive panel with presets; anti‑collision safety.</p>
+              </div>
+              <div class="card" data-panel-id="ad-task-6">
+                <h3>Shell</h3><p>Alu legs; PET felt cable tray; tempered glass...</p>
+              </div>
+            </div>
+        </div>
+    </section>
+    <section class="slide" data-step="ad-3" data-anim="fadeUp" data-route="desk">
+        <div class="glass hero">
+            <h2>Adaptive Desk — 3. No-Code App</h2>
+            <div class="options" style="grid-template-columns:repeat(3,1fr)">
+              <div class="card" data-panel-id="ad-task-7">
+                <h3>Pages</h3><p>Dashboard (height & posture), Scheduler, Insights</p>
+              </div>
+              <div class="card" data-panel-id="ad-task-8">
+                <h3>Supabase DB</h3><p><code>users(id,email)</code><br><code>sessions(...)</code></p>
+              </div>
+              <div class="card" data-panel-id="ad-task-9">
+                <h3>AI Coach</h3><p><code>POST /desk-tip { posture_score, meeting_load } ...</code></p>
+              </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ROUTE: Mini Cleaning Bot -->
+    <section class="slide" data-step="bot-1" data-anim="fadeUp" data-route="bot">
+        <div class="glass hero">
+            <h2>Mini Cleaning Bot — 1. Concept Art</h2>
+            <div class="options" style="grid-template-columns:repeat(3,1fr)">
+              <div class="card" data-panel-id="bot-task-1">
+                <h3>Form</h3><p><code>... palm‑size floor cleaning robot, triangular body ...</code></p>
+              </div>
+              <div class="card" data-panel-id="bot-task-2">
+                <h3>Home Scene</h3><p><code>... robot navigating under sofa, soft afternoon light ...</code></p>
+              </div>
+              <div class="card" data-panel-id="bot-task-3">
+                <h3>Packaging</h3><p><code>... compact retail box with handle, eco materials ...</code></p>
+              </div>
+            </div>
+        </div>
+    </section>
+    <section class="slide" data-step="bot-2" data-anim="fadeUp" data-route="bot">
+        <div class="glass hero">
+            <h2>Mini Cleaning Bot — 2. Mechanics & Dimensions</h2>
+            <div class="options" style="grid-template-columns:repeat(3,1fr)">
+              <div class="card" data-panel-id="bot-task-4">
+                <h3>Chassis</h3><p>Diameter 180mm; height 52mm; clearance 8mm.</p>
+              </div>
+              <div class="card" data-panel-id="bot-task-5">
+                <h3>Drive</h3><p>Dual wheel + caster; side brush 80mm; micro‑mop.</p>
+              </div>
+              <div class="card" data-panel-id="bot-task-6">
+                <h3>Dock</h3><p>160×90×70mm; pogo pins; cable management.</p>
+              </div>
+            </div>
+        </div>
+    </section>
+    <section class="slide" data-step="bot-3" data-anim="fadeUp" data-route="bot">
+        <div class="glass hero">
+            <h2>Mini Cleaning Bot — 3. No-Code App</h2>
+            <div class="options" style="grid-template-columns:repeat(3,1fr)">
+              <div class="card" data-panel-id="bot-task-7">
+                <h3>Pages</h3><p>Map, Schedules, Reports</p>
+              </div>
+              <div class="card" data-panel-id="bot-task-8">
+                <h3>Supabase DB</h3><p><code>users(id,email)</code><br><code>runs(id,user_id,date,area_m2)</code></p>
+              </div>
+              <div class="card" data-panel-id="bot-task-9">
+                <h3>AI Plans</h3><p><code>POST /clean-tip { dirt_score, rooms }</code> → plan</p>
+              </div>
+            </div>
+        </div>
+    </section>
+
+  </main>
+
+  <!-- Global fixed navigation -->
+  <div class="nav">
+    <button class="btn" id="prev">◀ Prev</button>
+    <div class="progress"><div class="bar" id="bar"></div></div>
+    <button class="btn" id="next">Next ▶</button>
+  </div>
+
+  <script>
+    // --- JAVASCRIPT SLIDE CONTROLLER ---
+
+    // State variables
+    let selectedRoute = null;
+    let allSlides = [...document.querySelectorAll('.slide')];
+    let visibleSlides = [];
+    let currentIndex = 0;
+
+    // DOM element references
+    const nextButton = document.getElementById('next');
+    const prevButton = document.getElementById('prev');
+    const homeButton = document.getElementById('home');
+    const progressBar = document.getElementById('bar');
+    const navContainer = document.querySelector('.nav');
+    const overlayContainer = document.getElementById('overlay');
+    const backdrop = document.getElementById('backdrop');
+    const panelHost = document.getElementById('panel-host');
+
+    /**
+     * Updates which slides are considered "visible" based on the selected route.
+     */
+    function updateVisibleSlides() {
+      if (!selectedRoute) {
+        visibleSlides = allSlides.filter(s => !s.dataset.route);
+      } else {
+        visibleSlides = allSlides.filter(s => s.dataset.route === selectedRoute);
+      }
+    }
+
+    /**
+     * Sets the active slide and updates the UI.
+     */
+    function setActiveSlide(index) {
+      updateVisibleSlides();
+      currentIndex = Math.max(0, Math.min(index, visibleSlides.length - 1));
+      allSlides.forEach(s => s.classList.remove('active'));
+      const currentSlide = visibleSlides[currentIndex];
+      if (currentSlide) {
+        currentSlide.classList.add('active');
+      }
+      updateNavUI();
+    }
+    
+    /**
+     * Updates the navigation UI elements.
+     */
+    function updateNavUI() {
+      if (!selectedRoute) {
+        navContainer.style.display = 'none';
+        homeButton.style.display = 'none';
+        return;
+      }
+      navContainer.style.display = 'flex';
+      homeButton.style.display = 'flex';
+      const progressPercent = ((currentIndex + 1) / visibleSlides.length) * 100;
+      progressBar.style.width = `${progressPercent}%`;
+      const isLastSlide = currentIndex === visibleSlides.length - 1;
+      prevButton.style.visibility = (currentIndex === 0) ? 'hidden' : 'visible';
+      nextButton.textContent = isLastSlide ? 'Replay ⟳' : 'Next ▶';
+    }
+
+    function goToNext() {
+      if (currentIndex < visibleSlides.length - 1) {
+        setActiveSlide(currentIndex + 1);
+      } else if (nextButton.textContent.includes('Replay')) {
+        goHome();
+      }
+    }
+
+    function goToPrev() {
+      if (currentIndex > 0) {
+        setActiveSlide(currentIndex - 1);
+      }
+    }
+    
+    function goHome() {
+        selectedRoute = null;
+        closeAllPanels();
+        setActiveSlide(0);
+    }
+
+    /**
+     * Opens a specific detail panel by its data-panel ID.
+     */
+    function openPanel(panelKey) {
+      const targetPanel = panelHost.querySelector(`.panel[data-panel="${panelKey}"]`);
+      if (!targetPanel || !overlayContainer) return;
+      
+      overlayContainer.innerHTML = '';
+      overlayContainer.appendChild(targetPanel);
+      overlayContainer.style.display = 'block';
+      
+      setTimeout(() => {
+        targetPanel.classList.add('active');
+        backdrop.classList.add('show');
+        document.body.classList.add('modal-open');
+      }, 10);
+    }
+
+    /**
+     * Closes any active detail panel.
+     */
+    function closeAllPanels() {
+      const activePanel = overlayContainer.querySelector('.panel.active');
+      if (activePanel) {
+        activePanel.classList.remove('active');
+        backdrop.classList.remove('show');
+        document.body.classList.remove('modal-open');
+        
+        setTimeout(() => {
+          overlayContainer.style.display = 'none';
+          if (panelHost) {
+            panelHost.appendChild(activePanel);
+          }
+        }, 300);
+      }
+    }
+
+    // --- EVENT LISTENERS ---
+    document.addEventListener('click', function(e) {
+      const target = e.target;
+      const cardWithPanel = target.closest('.card[data-panel-id]');
+      const mainOptionCard = target.closest('.option[data-go]');
+      
+      if (cardWithPanel) {
+        openPanel(cardWithPanel.dataset.panelId);
+        return;
+      }
+      
+      if (mainOptionCard) {
+        openPanel(mainOptionCard.dataset.go + '-main');
+        return;
+      }
+
+      const startButton = target.closest('.start-btn[data-start-route]');
+      if (startButton) {
+        selectedRoute = startButton.dataset.startRoute;
+        closeAllPanels();
+        setActiveSlide(0);
+        return;
+      }
+
+      if (target.closest('.close[data-close]')) {
+        closeAllPanels();
+        return;
+      }
+      
+      if (target === nextButton) goToNext();
+      if (target === prevButton) goToPrev();
+      if (target === homeButton) goHome();
+
+      if (selectedRoute && !target.closest('.glass, .nav, a, button, input, textarea, code')) {
+        goToNext();
+      }
+    });
+    
+    window.addEventListener('keydown', (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+      if (e.key === 'Escape') {
+        closeAllPanels();
+      } else if (!overlayContainer.querySelector('.panel.active')) {
+        if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') goToNext();
+        if (e.key === 'ArrowLeft' || e.key === 'PageUp') goToPrev();
+      }
+    });
+
+    // --- Three.js Initialization ---
+    function initThreeJS() {
+        function setupScene(canvasId, shapeType) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
+            renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(5, 10, 7.5);
+            scene.add(directionalLight);
+
+            let mesh;
+            // Geometry and Material
+            if (shapeType === 'nanofarm') {
+                const geometry = new THREE.BoxGeometry(1, 1.5, 1);
+                const material = new THREE.MeshStandardMaterial({ color: 0x4ade80, roughness: 0.5 });
+                mesh = new THREE.Mesh(geometry, material);
+            } else if (shapeType === 'biojewelry') {
+                const geometry = new THREE.TorusGeometry(0.8, 0.2, 16, 100);
+                const material = new THREE.MeshStandardMaterial({ color: 0xfde047, metalness: 0.8, roughness: 0.2 });
+                mesh = new THREE.Mesh(geometry, material);
+            } else if (shapeType === 'desk') {
+                const group = new THREE.Group();
+                const topGeo = new THREE.BoxGeometry(2.5, 0.1, 1.5);
+                const legGeo = new THREE.BoxGeometry(0.1, 1, 0.1);
+                const material = new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.6 });
+                const top = new THREE.Mesh(topGeo, material);
+                const leg1 = new THREE.Mesh(legGeo, material);
+                const leg2 = new THREE.Mesh(legGeo, material);
+                leg1.position.set(-1, -0.5, 0);
+                leg2.position.set(1, -0.5, 0);
+                group.add(top, leg1, leg2);
+                mesh = group;
+            } else if (shapeType === 'bot') {
+                const geometry = new THREE.CylinderGeometry(0.8, 0.8, 0.3, 32);
+                const material = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.3 });
+                mesh = new THREE.Mesh(geometry, material);
+                mesh.rotation.x = Math.PI / 4;
+            }
+
+            scene.add(mesh);
+            camera.position.z = 3;
+
+            function animate() {
+                requestAnimationFrame(animate);
+                mesh.rotation.y += 0.005;
+                mesh.rotation.x += 0.001;
+                renderer.render(scene, camera);
+            }
+            animate();
+            
+            // Handle resizing
+            window.addEventListener('resize', () => {
+                const { clientWidth, clientHeight } = canvas;
+                camera.aspect = clientWidth / clientHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(clientWidth, clientHeight);
+            });
+        }
+
+        setupScene('nanofarm-canvas', 'nanofarm');
+        setupScene('biojewelry-canvas', 'biojewelry');
+        setupScene('desk-canvas', 'desk');
+        setupScene('bot-canvas', 'bot');
+    }
+    
+    // Initial setup on page load.
+    document.addEventListener('DOMContentLoaded', () => {
+        setActiveSlide(0);
+        initThreeJS();
+    });
+
+  </script>
+</body>
+</html>
