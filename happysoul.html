@@ -1,70 +1,674 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Happy Souls — Yoga by Khushi Lekhwani</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-  <style>
-    body { background: radial-gradient(circle at top left, rgba(255,255,255,0.05), transparent), linear-gradient(120deg, #f0f, #0ff); min-height: 100vh; }
-    .glass { backdrop-filter: blur(16px); background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 1rem; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Happy Souls — Yoga by Khushi Lekhwani</title>
+    
+    <!-- Embedded CSS -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap');
+
+        /* General Body and Reset Styles */
+        :root {
+            --color-bg-start: #1c2541;
+            --color-bg-mid: #2a2a72;
+            --color-bg-end: #4e54c8;
+            --color-nebula1-start: rgba(251, 146, 60, 0.4); /* Amber */
+            --color-nebula1-mid: rgba(244, 114, 182, 0.4); /* Pink */
+            --color-nebula1-end: rgba(167, 139, 250, 0.4); /* Violet */
+            --color-nebula2-start: rgba(251, 113, 133, 0.45); /* Rose */
+            --color-nebula2-mid: rgba(147, 197, 253, 0.45); /* Sky */
+            --color-nebula2-end: rgba(110, 231, 183, 0.45); /* Emerald */
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: var(--color-bg-start);
+            color: #fff;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+        
+        /* Animated Background */
+        .background-container {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            overflow: hidden;
+            background: linear-gradient(45deg, var(--color-bg-start), var(--color-bg-mid), var(--color-bg-end));
+        }
+
+        .nebula {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.7;
+            will-change: transform;
+        }
+
+        #nebula1 {
+            width: 55vmax;
+            height: 55vmax;
+            top: -20%;
+            right: -20%;
+            background: linear-gradient(to bottom right, var(--color-nebula1-start), var(--color-nebula1-mid), var(--color-nebula1-end));
+        }
+
+        #nebula2 {
+            width: 50vmax;
+            height: 50vmax;
+            bottom: -25%;
+            left: -20%;
+            background: linear-gradient(to top right, var(--color-nebula2-start), var(--color-nebula2-mid), var(--color-nebula2-end));
+        }
+        
+        #starfield {
+            position: absolute;
+            inset: 0;
+        }
+
+        .star {
+            position: absolute;
+            border-radius: 50%;
+            background: white;
+            animation: star-flow linear infinite;
+            will-change: transform, opacity;
+        }
+
+        @keyframes star-flow {
+            0% {
+                transform: translateY(100vh);
+                opacity: 0;
+            }
+            20% {
+                opacity: 1;
+            }
+            80% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(0vh);
+                opacity: 0;
+            }
+        }
+
+        /* Main Container */
+        .main-container {
+            width: 100%;
+            max-width: 1024px;
+            margin: auto;
+            padding: 0 20px;
+            position: relative;
+            z-index: 2;
+        }
+        
+        /* Sticky Header */
+        .main-header {
+            position: sticky;
+            top: 1rem;
+            z-index: 50;
+            padding: 0 1rem;
+            transition: background-color 0.3s ease;
+        }
+        .header-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 1.5rem;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 1.5rem;
+        }
+        .header-logo { font-weight: 600; }
+
+        /* Sections */
+        section { padding: 4rem 0; }
+
+        /* Glass Card Component */
+        .glass-card {
+            position: relative;
+            overflow: hidden;
+            border-radius: 1.5rem;
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            padding: 2rem;
+        }
+        .glass-card::before { /* Sheen effect */
+            content: '';
+            position: absolute;
+            top: -5rem; left: -5rem;
+            width: 15rem; height: 15rem;
+            background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        /* Hero Section */
+        .hero { padding-top: 6rem; text-align: center; }
+        .hero h1 {
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            font-weight: 700;
+            line-height: 1.2;
+        }
+        .hero h1 span {
+            background: linear-gradient(45deg, #fbc2eb, #a6c1ee);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .hero p {
+            max-width: 600px;
+            margin: 1.5rem auto 0;
+            color: rgba(255,255,255,0.85);
+        }
+        .hero-actions {
+            margin-top: 2rem;
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        /* Generic Button */
+        .btn {
+            padding: 0.75rem 1.25rem;
+            border-radius: 9999px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .btn:hover { background: rgba(255, 255, 255, 0.2); }
+
+        /* Grid Layout */
+        .grid-layout {
+            display: grid;
+            gap: 1.5rem;
+        }
+        @media (min-width: 768px) {
+            .grid-layout { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        /* Breathing Orb */
+        .breathing-orb-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+        }
+        .orb {
+            width: 12rem; height: 12rem;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            background: radial-gradient(circle, rgba(255,255,255,0.4), rgba(255,255,255,0.1));
+            border: 1px solid rgba(255,255,255,0.3);
+            transition: transform 3s ease-in-out;
+            position: relative;
+        }
+        .orb.inhale { transform: scale(1.15); }
+        .orb.exhale { transform: scale(0.9); }
+        .orb-text { z-index: 1; font-weight: 600; text-transform: capitalize; }
+
+        /* Pose Explorer */
+        .pose-explorer {
+            display: grid;
+            gap: 1.5rem;
+            align-items: center;
+        }
+        @media (min-width: 768px) {
+            .pose-explorer { grid-template-columns: 1fr 1.2fr; }
+        }
+        .pose-info h3 { font-size: 1.75rem; margin-bottom: 0.5rem; }
+        .pose-info .style {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: rgba(255,255,255,0.8);
+        }
+        .pose-chips { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
+        .pose-chips .chip {
+            padding: 0.25rem 0.75rem;
+            font-size: 0.8rem;
+        }
+        .pose-chips .chip.active {
+            background: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 0 5px rgba(167, 139, 250, 0.7);
+        }
+        .pose-svg-container {
+            aspect-ratio: 4 / 3;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 1rem;
+            padding: 1rem;
+        }
+        .pose-figure path {
+            stroke: url(#pose-gradient);
+            stroke-width: 8;
+            stroke-linecap: round;
+            fill: none;
+            transition: d 0.5s ease-in-out;
+        }
+        .pose-figure circle {
+            fill: white;
+            transition: cx 0.5s ease-in-out, cy 0.5s ease-in-out;
+        }
+        
+        /* Testimonials */
+        .testimonials-grid {
+            display: grid;
+            gap: 1.5rem;
+        }
+        @media (min-width: 768px) {
+            .testimonials-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+        .testimonial-author {
+            margin-top: 1rem;
+            text-align: right;
+            font-style: italic;
+            color: rgba(255,255,255,0.8);
+        }
+        
+        /* Footer */
+        .main-footer {
+            padding: 2rem 0;
+            text-align: center;
+            color: rgba(255,255,255,0.8);
+            font-size: 0.9rem;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            z-index: 100;
+            display: none; /* Hidden by default */
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .modal-overlay.visible {
+            display: flex;
+            opacity: 1;
+        }
+        .modal-content {
+            max-width: 500px;
+            width: 100%;
+            position: relative;
+        }
+        .modal-close-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1.5rem;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+            line-height: 1;
+        }
+        .modal-content h3 { font-size: 1.75rem; margin-bottom: 1rem; }
+        .modal-content p { color: rgba(255,255,255,0.8); margin-bottom: 1rem; }
+        #modal-textarea {
+            width: 100%;
+            height: 8rem;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 0.75rem;
+            padding: 0.75rem;
+            color: white;
+            resize: vertical;
+            margin-bottom: 1rem;
+        }
+        #modal-textarea:focus { outline: none; border-color: rgba(255,255,255,0.5); }
+        #modal-submit-btn {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+    </style>
 </head>
-<body class="text-white">
-  <header class="glass p-4 m-4 flex justify-between items-center">
-    <h1 class="font-bold text-lg">Happy Souls — Khushi Lekhwani</h1>
-    <a href="https://wa.me/?text=Hello%20Khushi%2C%20I%27d%20like%20to%20join%20Happy%20Souls" target="_blank" class="px-4 py-2 glass">WhatsApp to Join</a>
-  </header>
+<body>
+    <div class="background-container">
+        <div id="nebula1" class="nebula"></div>
+        <div id="nebula2" class="nebula"></div>
+        <div id="starfield"></div>
+    </div>
 
-  <main class="space-y-8 p-4">
-    <section class="glass p-6 text-center">
-      <img src="hero.jpg" alt="Happy Souls Yoga" class="mx-auto rounded-xl mb-4" onerror="this.style.display='none'">
-      <h2 class="text-3xl font-bold mb-2">Happy Souls — Yoga by Khushi Lekhwani</h2>
-      <p>A guided, interactive journey that mirrors a real class — breathe, flow, strengthen, and soften.</p>
-      <a href="https://wa.me/?text=I%27m%20interested%20in%20Happy%20Souls" target="_blank" class="mt-4 inline-block px-4 py-2 glass">Message on WhatsApp</a>
-    </section>
+    <!-- Contact Modal -->
+    <div id="contact-modal" class="modal-overlay">
+        <div class="modal-content glass-card">
+            <button class="modal-close-btn">&times;</button>
+            <h3>Send an Inquiry</h3>
+            <p>Your message is pre-filled below. Feel free to add your own details before sending.</p>
+            <textarea id="modal-textarea"></textarea>
+            <button id="modal-submit-btn" class="btn">Send</button>
+        </div>
+    </div>
 
-    <section class="glass p-6 grid md:grid-cols-2 gap-4 items-center">
-      <img src="breath.jpg" alt="Breathwork" class="rounded-xl" onerror="this.style.display='none'">
-      <div>
-        <h3 class="text-2xl font-semibold mb-2">Settle into Stillness</h3>
-        <p>Before movement, we arrive. Try a 4‑2‑6 breath: inhale four, hold two, exhale six.</p>
-        <a href="https://wa.me/?text=Interested%20in%20Breathwork" target="_blank" class="mt-4 inline-block px-4 py-2 glass">Ask about Breathwork</a>
-      </div>
-    </section>
+    <header class="main-header">
+        <nav class="header-nav">
+            <div class="header-logo">Happy Souls</div>
+            <div class="contact-cta-container"></div>
+        </nav>
+    </header>
 
-    <section class="space-y-4">
-      <div class="glass p-4">
-        <img src="pose1.jpg" alt="Centering" class="rounded-xl mb-2" onerror="this.style.display='none'">
-        <h4 class="font-semibold">Centering</h4>
-        <p>Ground through the feet, lengthen the spine. Let the breath lead the body.</p>
-      </div>
-      <div class="glass p-4">
-        <img src="pose2.jpg" alt="Warm Flow" class="rounded-xl mb-2" onerror="this.style.display='none'">
-        <h4 class="font-semibold">Warm Flow</h4>
-        <p>Cat‑Cow to Sun Salutations. Move smooth, continuous, unhurried.</p>
-      </div>
-      <div class="glass p-4">
-        <img src="pose3.jpg" alt="Strength & Balance" class="rounded-xl mb-2" onerror="this.style.display='none'">
-        <h4 class="font-semibold">Strength & Balance</h4>
-        <p>Warrior II → Triangle → Tree. Steady gaze, soft face.</p>
-      </div>
-      <div class="glass p-4">
-        <img src="pose4.jpg" alt="Deep Rest" class="rounded-xl mb-2" onerror="this.style.display='none'">
-        <h4 class="font-semibold">Deep Rest</h4>
-        <p>Fold forward, then lie down. Shavasana to close.</p>
-      </div>
-    </section>
+    <main class="main-container">
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="glass-card">
+                <h1><span>Happy Souls Yoga</span><br>by Khushi Lekhwani</h1>
+                <p>An interactive one-page journey designed to mirror a real class. Settle your breath, explore the asanas, and find your flow. Scroll to begin.</p>
+                <div class="hero-actions">
+                    <a href="#journey" class="btn">Explore the Asanas</a>
+                    <div class="contact-cta-container"></div>
+                </div>
+            </div>
+        </section>
 
-    <section class="glass p-6 text-center">
-      <h3 class="text-xl font-semibold mb-2">Weekly Live Classes • Online & Studio</h3>
-      <p>Gentle, Vinyasa, and Breathwork. Beginner‑friendly and athlete‑approved.</p>
-      <a href="https://wa.me/?text=I%27d%20like%20to%20reserve%20a%20spot" target="_blank" class="mt-4 inline-block px-4 py-2 glass">Reserve via WhatsApp</a>
-    </section>
-  </main>
+        <!-- Breath Coach Section -->
+        <section id="breath">
+            <div class="grid-layout">
+                <div class="glass-card breathing-orb-container">
+                    <div class="orb" id="breathing-orb">
+                        <span id="orb-text" class="orb-text">inhale</span>
+                    </div>
+                    <button id="breath-toggle-btn" class="btn">Pause</button>
+                    <p class="text-white/80 text-center text-sm">Follow the orb's rhythm to center your breath.</p>
+                </div>
+                <div class="glass-card">
+                    <h2>Settle into Stillness</h2>
+                    <p class="mt-2 text-white/85">Try a 4-2-6 breath: inhale for four, hold for two, exhale for six. Notice the shoulders soften, jaw unclench, and attention gather.</p>
+                    <div class="contact-cta-container mt-5"></div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Journey / Pose Explorer -->
+        <section id="journey">
+            <div class="glass-card pose-explorer">
+                <div class="pose-info">
+                    <div id="pose-style" class="style">Foundations</div>
+                    <h3 id="pose-title">Tadasana — Mountain Pose</h3>
+                    <p id="pose-cue" class="text-white/85">Feet grounded, tail heavy, crown tall. Palms open. Find stillness.</p>
+                    <div id="pose-chips" class="pose-chips"></div>
+                </div>
+                <div class="pose-svg-container">
+                    <svg id="pose-svg" class="w-full h-full" viewBox="0 0 400 300">
+                        <defs>
+                            <linearGradient id="pose-gradient" gradientTransform="rotate(90)">
+                                <stop offset="0%" stop-color="#ffffff" stop-opacity="0.9" />
+                                <stop offset="100%" stop-color="#ffffff" stop-opacity="0.2" />
+                            </linearGradient>
+                        </defs>
+                        <g class="pose-figure" id="pose-figure"></g>
+                    </svg>
+                </div>
+            </div>
+        </section>
 
-  <footer class="text-center text-white/70 p-4">
-    © <script>document.write(new Date().getFullYear())</script> Happy Souls • Instructor: Khushi Lekhwani
-  </footer>
+        <!-- Testimonials Section -->
+        <section id="testimonials">
+            <div class="testimonials-grid">
+                <div class="glass-card">
+                    <p>“Khushi’s cues helped me finally master basics with ease. Her classes feel so personal and supportive.”</p>
+                    <div class="testimonial-author">— Aanya</div>
+                </div>
+                <div class="glass-card">
+                    <p>“I feel calmer and stronger after every class. It's the perfect reset for a busy week.”</p>
+                    <div class="testimonial-author">— Rhea</div>
+                </div>
+                <div class="glass-card">
+                    <p>“The perfect mix of breathwork and movement for my mornings. I leave feeling energized and centered.”</p>
+                    <div class="testimonial-author">— Tanvi</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Final CTA -->
+        <section id="join">
+            <div class="glass-card text-center">
+                <h2>Join the next class</h2>
+                <p class="mt-2 text-white/85 max-w-xl mx-auto">Ready to start your practice? Send a message to inquire about schedules, class types, or any other questions you may have.</p>
+                <div class="contact-cta-container mt-6 flex justify-center"></div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="main-footer">
+        <p>&copy; 2025 Happy Souls • Instructor: Khushi Lekhwani</p>
+    </footer>
+
+    <!-- Embedded JavaScript -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // --- Parallax Background Animation ---
+            const nebula1 = document.getElementById('nebula1');
+            const nebula2 = document.getElementById('nebula2');
+            window.addEventListener('scroll', () => {
+                const { scrollTop, scrollHeight, clientHeight } = document.documentElement;
+                const scrollPercent = scrollTop / (scrollHeight - clientHeight);
+                nebula1.style.transform = `translateY(${scrollPercent * -100}px) rotate(${scrollPercent * 20}deg)`;
+                nebula2.style.transform = `translateY(${scrollPercent * 80}px) rotate(${scrollPercent * -15}deg)`;
+            });
+
+            // --- Starfield Generation ---
+            const starfield = document.getElementById('starfield');
+            const starCount = 150;
+            for (let i = 0; i < starCount; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                const size = Math.random() * 2 + 0.5;
+                star.style.width = `${size}px`;
+                star.style.height = `${size}px`;
+                star.style.left = `${Math.random() * 100}%`;
+                star.style.top = `${Math.random() * 100}vh`;
+                star.style.animationDuration = `${20 + Math.random() * 20}s`;
+                star.style.animationDelay = `${Math.random() * 20}s`;
+                starfield.appendChild(star);
+            }
+            
+            // --- Breathing Orb Logic ---
+            const orb = document.getElementById('breathing-orb');
+            const orbText = document.getElementById('orb-text');
+            const breathBtn = document.getElementById('breath-toggle-btn');
+            let breathPlaying = true;
+            const breathPhases = [
+                { label: "inhale", duration: 4000, className: "inhale" },
+                { label: "hold", duration: 2000, className: "inhale" },
+                { label: "exhale", duration: 6000, className: "exhale" },
+                { label: "hold", duration: 2000, className: "exhale" },
+            ];
+            let currentPhase = 0;
+            let breathTimeout;
+
+            function runBreathCycle() {
+                if (!breathPlaying) return;
+                const phase = breathPhases[currentPhase];
+                orbText.textContent = phase.label;
+                orb.className = 'orb ' + phase.className;
+                
+                breathTimeout = setTimeout(() => {
+                    currentPhase = (currentPhase + 1) % breathPhases.length;
+                    runBreathCycle();
+                }, phase.duration);
+            }
+            
+            breathBtn.addEventListener('click', () => {
+                breathPlaying = !breathPlaying;
+                breathBtn.textContent = breathPlaying ? "Pause" : "Start";
+                if (breathPlaying) {
+                    runBreathCycle();
+                } else {
+                    clearTimeout(breathTimeout);
+                }
+            });
+            runBreathCycle();
+
+            // --- Pose Explorer Logic ---
+            const poses = [
+                { short: "Tadasana", title: "Tadasana — Mountain Pose", style: "Foundations", cue: "Feet grounded, tail heavy, crown tall. Palms open. Find stillness." },
+                { short: "Vriksha", title: "Vrikshasana — Tree Pose", style: "Balance", cue: "Root through the standing foot, lift the heart, soften the jaw." },
+                { short: "Warrior II", title: "Virabhadrasana II — Warrior II", style: "Strength", cue: "Arms long, gaze soft over the front hand. Ribcage buoyant." },
+                { short: "Balasana", title: "Balasana — Child's Pose", style: "Restore", cue: "Knees wide, hips sink back, forehead soft to the mat." },
+                { short: "Shavasana", title: "Shavasana — Final Rest", style: "Stillness", cue: "Let the floor hold you. Nothing to do. Spacious breath." },
+            ];
+            let currentPoseIndex = 0;
+            let poseAnimationTime = 0;
+            let animationFrameId;
+            const poseTitleEl = document.getElementById('pose-title');
+            const poseStyleEl = document.getElementById('pose-style');
+            const poseCueEl = document.getElementById('pose-cue');
+            const poseFigureEl = document.getElementById('pose-figure');
+            const poseChipsEl = document.getElementById('pose-chips');
+
+            const poseStructures = {
+                // cx: 200, cy: 150 (center)
+                tadasana: (t) => ({
+                    head: { cx: 200, cy: 100 + Math.sin(t*2)*2 },
+                    torso: `M200,110 L200,190`,
+                    arms: `M200,130 L170,180 M200,130 L230,180`,
+                    legs: `M200,190 L185,250 M200,190 L215,250`
+                }),
+                vriksha: (t) => ({
+                    head: { cx: 200, cy: 100 + Math.sin(t*2)*2 },
+                    torso: `M200,110 L200,200`,
+                    arms: `M170,120 L200,140 L230,120`,
+                    legs: `M200,200 L200,250 M200,200 L170,220`
+                }),
+                warrior2: (t) => ({
+                    head: { cx: 200, cy: 120 + Math.sin(t*2)*2 },
+                    torso: `M200,130 L200,200`,
+                    arms: `M100,150 L300,150`,
+                    legs: `M200,200 L150,250 M200,200 L250,250`
+                }),
+                balasana: (t) => ({
+                    head: { cx: 260, cy: 230 + Math.sin(t*2)*2 },
+                    torso: `M150,230 C200,200 240,210 260,230`,
+                    arms: `M150,230 L260,230`,
+                    legs: `M150,230 C130,250 120,250 110,240`
+                }),
+                shavasana: (t) => ({
+                    head: { cx: 200, cy: 150 + Math.sin(t*2)*2 },
+                    torso: `M200,160 L200,220`,
+                    arms: `M200,180 L150,200 M200,180 L250,200`,
+                    legs: `M200,220 L160,250 M200,220 L240,250`
+                })
+            };
+
+            function renderPose(index, time) {
+                const structureFn = Object.values(poseStructures)[index];
+                if (!structureFn) return;
+                
+                const poseData = structureFn(time);
+                
+                poseFigureEl.innerHTML = `
+                    <path d="${poseData.torso}" />
+                    <path d="${poseData.arms}" />
+                    <path d="${poseData.legs}" />
+                    <circle cx="${poseData.head.cx}" cy="${poseData.head.cy}" r="10" />
+                `;
+            }
+            
+            function animatePose() {
+                poseAnimationTime += 0.02;
+                renderPose(currentPoseIndex, poseAnimationTime);
+                animationFrameId = requestAnimationFrame(animatePose);
+            }
+
+            function updatePoseUI(index) {
+                currentPoseIndex = index;
+                const pose = poses[index];
+                poseTitleEl.textContent = pose.title;
+                poseStyleEl.textContent = pose.style;
+                poseCueEl.textContent = pose.cue;
+                
+                document.querySelectorAll('.pose-chips .chip').forEach((chip, i) => {
+                    chip.classList.toggle('active', i === index);
+                });
+            }
+
+            poses.forEach((pose, index) => {
+                const chip = document.createElement('button');
+                chip.className = 'btn chip';
+                chip.textContent = pose.short;
+                chip.addEventListener('click', () => updatePoseUI(index));
+                poseChipsEl.appendChild(chip);
+            });
+            
+            updatePoseUI(0);
+            animatePose();
+
+            // --- Modal and CTA Logic ---
+            const modal = document.getElementById('contact-modal');
+            const closeModalBtn = document.querySelector('.modal-close-btn');
+            const modalTextarea = document.getElementById('modal-textarea');
+            const modalSubmitBtn = document.getElementById('modal-submit-btn');
+            const yourWhatsAppNumber = "910000000000"; // IMPORTANT: Replace with your actual WhatsApp number
+
+            function openModal(preset) {
+                const baseMessage = `Hello Khushi! I'm interested in the Happy Souls yoga classes. ${preset}`.trim();
+                modalTextarea.value = `${baseMessage}\n\nCould you please provide more details?\n `;
+                modal.classList.add('visible');
+            }
+
+            function closeModal() {
+                modal.classList.remove('visible');
+            }
+
+            closeModalBtn.addEventListener('click', closeModal);
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    closeModal();
+                }
+            });
+
+            modalSubmitBtn.addEventListener('click', () => {
+                const message = modalTextarea.value;
+                const whatsappUrl = `https://wa.me/${919356292955}?text=${encodeURIComponent(message)}`;
+                window.open(whatsappUrl, '_blank');
+                closeModal();
+            });
+
+            const ctaContainers = document.querySelectorAll('.contact-cta-container');
+            const createCta = (label, preset) => {
+                const btn = document.createElement('button');
+                btn.className = 'btn';
+                btn.textContent = label;
+                btn.addEventListener('click', () => openModal(preset));
+                return btn;
+            };
+
+            ctaContainers.forEach((container, i) => {
+                let label = "Join Now";
+                let preset = "";
+                if (i === 0) { label = "Start Your Practice"; preset = "I'd like to get started."; }
+                if (i === 1) { preset = "I'd like to get started."; }
+                if (i === 2) { 
+                    label = "Ask about Breathwork"; 
+                    preset = "I'd like to learn more about your breathwork sessions.";
+                    container.parentElement.querySelector('p.mt-2').insertAdjacentElement('afterend', container);
+                    container.classList.add('mt-4');
+                }
+                if (i === 3) { label = "Start Your Practice"; preset = "I'd like to book a class."; }
+                container.appendChild(createCta(label, preset));
+            });
+        });
+    </script>
 </body>
 </html>
